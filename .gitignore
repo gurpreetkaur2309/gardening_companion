@@ -1,0 +1,46 @@
+# Environment / secrets  — never commit these
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+
+# Instance data (local uploads, sqlite-ish artifacts)
+instance/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.Python
+
+# Virtualenvs
+venv/
+.venv/
+env/
+ENV/
+
+# Testing / tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Celery
+celerybeat-schedule*
+celerybeat.pid
+
+# Editors
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Logs
+*.log

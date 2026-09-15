@@ -1,0 +1,13 @@
+Welcome, {{ user.display_name.split()[0] }}!
+
+Your Gardening Companion account is ready.
+
+1. Add your plants — pick them from the catalog and we'll work out watering and
+   feeding intervals, adjusted for how old each plant is.
+2. Let the reminders do the work — one email when things come due, not one per plant.
+3. Ask Sprout — the assistant can see what's in your garden.
+
+Add your first plant: {{ base_url }}/dashboard/
+
+--
+Gardening Companion

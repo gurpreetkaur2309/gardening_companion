@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" role="img" aria-label="No photo">
+  <rect width="320" height="200" fill="#f1f8f3"/>
+  <g transform="translate(160 118)" opacity="0.5">
+    <path d="M0 22V-14" stroke="#2f8757" stroke-width="4" stroke-linecap="round"/>
+    <path d="M0 -6c0-16 11-29 28-31 2 18-10 32-28 34z" fill="#8bc79f"/>
+    <path d="M0 4c0-14-10-25-24-27-2 15 9 28 24 29z" fill="#57a878"/>
+    <path d="M-22 24h44l-4 20h-36z" fill="#b3aa98"/>
+  </g>
+</svg>

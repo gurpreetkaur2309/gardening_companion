@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field %}
+{% block title %}Your profile — Gardening Companion{% endblock %}
+
+{% block content %}
+<div class="container-app" style="padding-top:1.75rem;max-width:880px">
+  <div class="page-head">
+    <h1>Your account</h1>
+    <p>{{ current_user.email }}{% if current_user.is_admin %} · <span class="chip chip--info">Admin</span>{% endif %}</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><span class="stat__value">{{ summary.total_plants }}</span><span class="stat__label">Plants</span></div>
+    <div class="stat"><span class="stat__value">{{ summary.gardens }}</span><span class="stat__label">Gardens</span></div>
+    <div class="stat"><span class="stat__value">{{ summary.actions_30d }}</span><span class="stat__label">Actions (30d)</span></div>
+    <div class="stat {{ 'stat--good' if summary.streak >= 3 }}">
+      <span class="stat__value">{{ summary.streak }}</span><span class="stat__label">Day streak</span>
+    </div>
+  </div>
+
+  <div style="display:grid;gap:1.5rem;grid-template-columns:repeat(auto-fit,minmax(320px,1fr))">
+    <div class="card">
+      <div class="card__header"><h3>Details</h3></div>
+      <div class="card__body">
+        <form method="post" novalidate>
+          {{ form.csrf_token }}
+          {{ field(form.full_name) }}
+          {{ field(form.username) }}
+          {{ field(form.phone, placeholder="Optional") }}
+          <div class="field">
+            <label class="field__label">Email</label>
+            <input class="input" type="email" value="{{ current_user.email }}" disabled>
+            <div class="field__hint">Email addresses can't be changed here.</div>
+          </div>
+          {{ form.submit(class="btn btn--primary") }}
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card__header"><h3>Password</h3></div>
+      <div class="card__body">
+        <form method="post" action="{{ url_for('profile.change_password') }}" novalidate>
+          {{ password_form.csrf_token }}
+          {% if current_user.has_password %}
+            {{ field(password_form.current_password, autocomplete="current-password") }}
+          {% else %}
+            <p class="u-small u-muted">
+              You signed up with Google. Set a password to also sign in directly.
+            </p>
+          {% endif %}
+          {{ field(password_form.password, autocomplete="new-password") }}
+          {{ field(password_form.confirm, autocomplete="new-password") }}
+          <button class="btn btn--secondary" type="submit">Change password</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {% if requests %}
+    <div class="card u-mt-3">
+      <div class="card__header"><h3>Your plant requests</h3></div>
+      <div class="card__body">
+        <ul class="timeline">
+          {% for r in requests %}
+            <li>
+              <span class="timeline__icon">
+                <i class="fa-solid {{ {'pending':'fa-hourglass-half','approved':'fa-check','rejected':'fa-xmark'}[r.status] }}"></i>
+              </span>
+              <span class="timeline__body">
+                <strong>{{ r.plant_name }}</strong>
+                <span class="chip {{ {'pending':'chip--due','approved':'chip--upcoming','rejected':'chip--overdue'}[r.status] }} u-tiny">{{ r.status }}</span>
+              </span>
+              <span class="timeline__when">{{ r.created_at | timeago }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if recent %}
+    <div class="card u-mt-3">
+      <div class="card__header"><h3>Recent care</h3></div>
+      <div class="card__body">
+        <ul class="timeline">
+          {% for log in recent %}
+            <li>
+              <span class="timeline__icon"><i class="fa-solid {{ log.action_enum.icon }}"></i></span>
+              <span class="timeline__body">
+                <strong>{{ log.action_enum.label }}</strong>
+                {% if log.note %}<span class="u-muted"> — {{ log.note }}</span>{% endif %}
+              </span>
+              <span class="timeline__when">{{ log.created_at | timeago }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

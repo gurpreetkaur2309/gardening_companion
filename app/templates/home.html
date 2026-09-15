@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Gardening Companion — never lose another plant{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="container-app hero__grid">
+    <div>
+      <span class="hero__eyebrow"><i class="fa-solid fa-sparkles"></i> Plant care, on a schedule</span>
+      <h1>Your plants don't die from neglect.<br>They die from guesswork.</h1>
+      <p class="hero__lead">
+        Care needs vary wildly by species and by life stage — seedling basil wants water daily,
+        a mature snake plant every three weeks. Gardening Companion keeps that straight for you,
+        tells you what needs attention today, and emails you before anything suffers.
+      </p>
+      <div class="hero__cta">
+        <a class="btn btn--primary btn--lg" href="{{ url_for('auth.signup') }}">
+          Start your garden <i class="fa-solid fa-arrow-right"></i>
+        </a>
+        <a class="btn btn--secondary btn--lg" href="{{ url_for('auth.login') }}">Sign in</a>
+      </div>
+      {% if catalog_size %}
+        <p class="u-small u-muted u-mt-3 u-mb-0">
+          <i class="fa-solid fa-leaf"></i>
+          {{ catalog_size }} species in the catalog, each with real care data.
+        </p>
+      {% endif %}
+    </div>
+
+    <div class="hero__art" aria-hidden="true">
+      <div class="u-flex-between u-mb-2" style="color:#fff">
+        <strong>Today</strong>
+        <span class="u-tiny" style="opacity:.75">3 need attention</span>
+      </div>
+      <div class="hero__preview">
+        <div class="hero__preview-row">
+          <span class="hero__preview-dot" style="background:#e08a6a"></span>
+          <span class="u-grow">Monstera deliciosa</span>
+          <span class="u-tiny" style="opacity:.8">2 days overdue</span>
+        </div>
+        <div class="hero__preview-row">
+          <span class="hero__preview-dot" style="background:#f2c66d"></span>
+          <span class="u-grow">Thai basil</span>
+          <span class="u-tiny" style="opacity:.8">water today</span>
+        </div>
+        <div class="hero__preview-row">
+          <span class="hero__preview-dot" style="background:#f2c66d"></span>
+          <span class="u-grow">Cherry tomato ×4</span>
+          <span class="u-tiny" style="opacity:.8">feed today</span>
+        </div>
+        <div class="hero__preview-row">
+          <span class="hero__preview-dot" style="background:#8bc79f"></span>
+          <span class="u-grow">Snake plant</span>
+          <span class="u-tiny" style="opacity:.8">in 11 days</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="features">
+  <div class="container-app">
+    <div class="u-center u-mb-3">
+      <h2>Everything a plant owner actually needs</h2>
+      <p class="u-muted">No feeds, no streaks to maintain for their own sake. Just care that happens on time.</p>
+    </div>
+
+    <div class="feature-grid">
+      <article class="feature">
+        <div class="feature__icon"><i class="fa-solid fa-calendar-check"></i></div>
+        <h3>Schedules that adapt</h3>
+        <p>Each plant gets watering and feeding intervals drawn from a curated catalog, then scaled
+           to its life stage. Seedlings get watered twice as often as mature plants — automatically.</p>
+      </article>
+
+      <article class="feature">
+        <div class="feature__icon"><i class="fa-solid fa-envelope"></i></div>
+        <h3>Reminders before it's too late</h3>
+        <p>A background job sweeps for due plants and sends one digest email — not one per plant.
+           Twenty plants due on the same morning is still a single message.</p>
+      </article>
+
+      <article class="feature">
+        <div class="feature__icon"><i class="fa-solid fa-robot"></i></div>
+        <h3>An AI that knows your garden</h3>
+        <p>Sprout answers gardening questions with your actual plants as context, so
+           "what should I do this week?" gets a real answer instead of a generic one.</p>
+      </article>
+
+      <article class="feature">
+        <div class="feature__icon"><i class="fa-solid fa-layer-group"></i></div>
+        <h3>Multiple gardens</h3>
+        <p>Balcony, windowsill, terrace, allotment. Keep them separate, switch between them
+           in one click, and move plants across as they grow.</p>
+      </article>
+
+      <article class="feature">
+        <div class="feature__icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+        <h3>A record of what you did</h3>
+        <p>Every watering, feeding, pruning and repotting is logged. See a plant's full
+           history and how reliably you've kept up.</p>
+      </article>
+
+      <article class="feature">
+        <div class="feature__icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+        <h3>A growing catalog</h3>
+        <p>Can't find your plant? Request it. An admin reviews and adds it, with care data
+           filled in by AI when the catalog doesn't already know the species.</p>
+      </article>
+    </div>
+
+    <div class="u-center u-mt-3">
+      <a class="btn btn--primary btn--lg" href="{{ url_for('auth.signup') }}">Create a free account</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

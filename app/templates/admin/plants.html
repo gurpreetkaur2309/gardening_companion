@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Catalog — Admin{% endblock %}
+
+{% block content %}
+<div class="container-app" style="padding-top:1.75rem">
+  <div class="page-head u-flex-between u-wrap">
+    <div>
+      <h1>Plant catalog</h1>
+      <p>{{ plants | length }} species. Care data here is shared by every user.</p>
+    </div>
+    <a class="btn btn--primary" href="{{ url_for('admin.create_plant') }}">
+      <i class="fa-solid fa-plus"></i> Add a plant
+    </a>
+  </div>
+
+  <form method="get" class="u-flex u-gap-1 u-mb-3">
+    <input class="input" type="search" name="q" value="{{ query }}"
+           placeholder="Search by name, genus or family…" aria-label="Search catalog">
+    <button class="btn btn--secondary" type="submit">Search</button>
+    {% if query %}<a class="btn btn--ghost" href="{{ url_for('admin.plants') }}">Clear</a>{% endif %}
+  </form>
+
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th></th><th>Name</th><th>Family</th><th>Water</th><th>Feed</th>
+          <th>Sun</th><th>Source</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for plant in plants %}
+          <tr>
+            <td>
+              <img src="{{ image_url(plant.image_key) }}" alt="" loading="lazy"
+                   style="width:44px;height:44px;object-fit:cover;border-radius:8px;display:block">
+            </td>
+            <td>
+              <strong>{{ plant.common_name }}</strong>
+              {% if plant.scientific_name %}
+                <div class="u-tiny u-muted" style="font-style:italic">{{ plant.scientific_name }}</div>
+              {% endif %}
+            </td>
+            <td class="u-muted u-small">{{ plant.family or '—' }}</td>
+            <td>{{ plant.care.watering_days }}d</td>
+            <td>{{ plant.care.fertilizing_days }}d</td>
+            <td><i class="fa-solid {{ plant.care.sunlight_enum.icon }}" title="{{ plant.care.sunlight_enum.label }}"></i></td>
+            <td>
+              <span class="chip {{ 'chip--upcoming' if plant.care_source in ['curated','manual'] else ('chip--info' if plant.care_source == 'ai' else 'chip--muted') }} u-tiny">
+                {{ plant.care_source }}
+              </span>
+            </td>
+            <td>
+              <div class="table__actions">
+                <a class="btn btn--ghost btn--sm" href="{{ url_for('admin.edit_plant', plant_id=plant.id) }}">Edit</a>
+                <form method="post" action="{{ url_for('admin.delete_plant', plant_id=plant.id) }}"
+                      data-confirm="Delete '{{ plant.common_name }}' from the catalog?">
+                  {{ confirm_form.csrf_token }}
+                  <button class="btn btn--ghost btn--sm" type="submit" style="color:var(--danger)">Delete</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="8" class="u-center u-muted" style="padding:2rem">
+            {% if query %}Nothing matches "{{ query }}".{% else %}
+              The catalog is empty. Run <code>python manage.py seed-catalog</code>.
+            {% endif %}
+          </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field %}
+{% block title %}Create an account — Gardening Companion{% endblock %}
+
+{% block content %}
+<div class="auth">
+  <div class="auth__card">
+    <div class="auth__head">
+      <h1>Start your garden</h1>
+      <p>Free, and takes about a minute.</p>
+    </div>
+
+    <form method="post" novalidate>
+      {{ form.csrf_token }}
+      {{ field(form.full_name, placeholder="Gurpreet Singh", autofocus=True, autocomplete="name") }}
+      {{ field(form.username, placeholder="gurpreet", autocomplete="username") }}
+      {{ field(form.email, placeholder="you@example.com", autocomplete="email", type="email") }}
+      {{ field(form.phone, placeholder="Optional", autocomplete="tel") }}
+
+      {% call field(form.password, placeholder="At least 10 characters", autocomplete="new-password") %}
+        <div class="field__hint">Length beats symbols. A short phrase works well.</div>
+      {% endcall %}
+      {{ field(form.confirm, placeholder="Repeat your password", autocomplete="new-password") }}
+
+      <button class="btn btn--primary btn--block btn--lg" type="submit">Create account</button>
+    </form>
+
+    {% if google_enabled %}
+      <div class="auth__divider">or</div>
+      <a class="btn btn--secondary btn--block" href="{{ url_for('auth.google_login') }}">
+        <i class="fa-brands fa-google"></i> Continue with Google
+      </a>
+    {% endif %}
+
+    <p class="auth__foot">
+      Already have an account? <a href="{{ url_for('auth.login') }}">Sign in</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

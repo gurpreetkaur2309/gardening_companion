@@ -1,0 +1,37 @@
+{% extends "email/_base.html" %}
+{% block subject %}Welcome to Gardening Companion{% endblock %}
+
+{% block body %}
+  <p style="margin:0 0 16px;font-size:18px;font-weight:600;">
+    Welcome, {{ user.display_name.split()[0] }} 🌱
+  </p>
+  <p style="margin:0 0 18px;">
+    Your account is ready. Here's how to get the most out of it:
+  </p>
+
+  <ol style="margin:0 0 22px;padding-left:20px;">
+    <li style="margin-bottom:8px;">
+      <strong>Add your plants.</strong> Pick them from the catalog and we'll work out
+      watering and feeding intervals — adjusted for how old each plant is.
+    </li>
+    <li style="margin-bottom:8px;">
+      <strong>Let the reminders do the work.</strong> You'll get one email when things
+      come due, not one per plant.
+    </li>
+    <li style="margin-bottom:8px;">
+      <strong>Ask Sprout.</strong> The assistant can see what's in your garden, so
+      "what should I do this week?" gets a real answer.
+    </li>
+  </ol>
+
+  <table role="presentation" cellpadding="0" cellspacing="0">
+    <tr>
+      <td style="background:#1f6b44;border-radius:8px;">
+        <a href="{{ base_url }}/dashboard/"
+           style="display:inline-block;padding:11px 22px;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;">
+          Add your first plant
+        </a>
+      </td>
+    </tr>
+  </table>
+{% endblock %}

@@ -1,0 +1,119 @@
+{# Shared rendering helpers. Keeps field markup and error display consistent. #}
+
+{% macro field(f, placeholder="", autofocus=False, autocomplete=None, type=None) %}
+  <div class="field">
+    {{ f.label(class="field__label") }}
+    {{ f(class="input" + (" is-invalid" if f.errors else ""),
+         placeholder=placeholder,
+         autofocus=autofocus,
+         autocomplete=autocomplete,
+         **({'type': type} if type else {})) }}
+    {% for error in f.errors %}<div class="field__error">{{ error }}</div>{% endfor %}
+    {% if caller is defined %}{{ caller() }}{% endif %}
+  </div>
+{% endmacro %}
+
+{% macro select_field(f) %}
+  <div class="field">
+    {{ f.label(class="field__label") }}
+    {{ f(class="select" + (" is-invalid" if f.errors else "")) }}
+    {% for error in f.errors %}<div class="field__error">{{ error }}</div>{% endfor %}
+  </div>
+{% endmacro %}
+
+{% macro textarea_field(f, placeholder="") %}
+  <div class="field">
+    {{ f.label(class="field__label") }}
+    {{ f(class="textarea" + (" is-invalid" if f.errors else ""), placeholder=placeholder) }}
+    {% for error in f.errors %}<div class="field__error">{{ error }}</div>{% endfor %}
+  </div>
+{% endmacro %}
+
+{% macro checkbox_field(f) %}
+  <div class="field">
+    <label class="checkbox">
+      {{ f() }}
+      <span>{{ f.label.text }}</span>
+    </label>
+    {% for error in f.errors %}<div class="field__error">{{ error }}</div>{% endfor %}
+  </div>
+{% endmacro %}
+
+{# The urgency chip. Repeats the colour-coded card edge in words, so the
+   signal survives colour-blindness and greyscale printing. #}
+{% macro due_chip(days, label, icon) %}
+  {% if days is none %}
+    <span class="chip chip--muted"><i class="fa-solid {{ icon }}"></i> {{ label }}: not set</span>
+  {% elif days < 0 %}
+    <span class="chip chip--overdue"><i class="fa-solid {{ icon }}"></i>
+      {{ label }} {{ -days }}d overdue</span>
+  {% elif days == 0 %}
+    <span class="chip chip--due"><i class="fa-solid {{ icon }}"></i> {{ label }} today</span>
+  {% elif days == 1 %}
+    <span class="chip chip--upcoming"><i class="fa-solid {{ icon }}"></i> {{ label }} tomorrow</span>
+  {% else %}
+    <span class="chip chip--upcoming"><i class="fa-solid {{ icon }}"></i> {{ label }} in {{ days }}d</span>
+  {% endif %}
+{% endmacro %}
+
+{% macro plant_card(planting, image_url, care_form, confirm_form, compact=False) %}
+  <article class="plant-card" data-urgency="{{ planting.urgency }}">
+    <a href="{{ url_for('dashboard.planting_detail', planting_id=planting.id) }}"
+       class="plant-card__media" aria-label="Open {{ planting.display_name }}">
+      <img src="{{ image_url(planting.plant.image_key if planting.plant else None) }}"
+           alt="" loading="lazy" width="320" height="200">
+      {% if planting.quantity > 1 %}
+        <span class="plant-card__qty">×{{ planting.quantity }}</span>
+      {% endif %}
+    </a>
+
+    <div class="plant-card__body">
+      <h3 class="plant-card__title">
+        <a href="{{ url_for('dashboard.planting_detail', planting_id=planting.id) }}">
+          {{ planting.display_name }}
+        </a>
+      </h3>
+      {% if planting.plant and planting.plant.scientific_name %}
+        <p class="plant-card__sub">{{ planting.plant.scientific_name }}</p>
+      {% endif %}
+
+      <div class="plant-card__meta">
+        {{ due_chip(planting.days_until_water, "Water", "fa-droplet") }}
+        {% if not compact %}
+          {{ due_chip(planting.days_until_fertilize, "Feed", "fa-seedling") }}
+        {% endif %}
+        {% if not planting.reminders_enabled %}
+          <span class="chip chip--muted"><i class="fa-solid fa-bell-slash"></i> Muted</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="plant-card__actions">
+      <form method="post" action="{{ url_for('dashboard.log_care', planting_id=planting.id) }}">
+        {{ care_form.csrf_token }}
+        <input type="hidden" name="action" value="water">
+        <button class="btn btn--sm {{ 'btn--primary' if planting.needs_water else 'btn--secondary' }}"
+                type="submit" title="Log a watering">
+          <i class="fa-solid fa-droplet"></i> Water
+        </button>
+      </form>
+      <form method="post" action="{{ url_for('dashboard.log_care', planting_id=planting.id) }}">
+        {{ care_form.csrf_token }}
+        <input type="hidden" name="action" value="fertilize">
+        <button class="btn btn--sm {{ 'btn--primary' if planting.needs_fertilizer else 'btn--secondary' }}"
+                type="submit" title="Log a feeding">
+          <i class="fa-solid fa-seedling"></i> Feed
+        </button>
+      </form>
+    </div>
+  </article>
+{% endmacro %}
+
+{% macro empty_state(icon, title, body, cta_url=None, cta_label=None) %}
+  <div class="empty">
+    <div class="empty__icon"><i class="fa-solid {{ icon }}"></i></div>
+    <h3>{{ title }}</h3>
+    <p>{{ body }}</p>
+    {% if cta_url %}<a class="btn btn--primary" href="{{ cta_url }}">{{ cta_label }}</a>{% endif %}
+  </div>
+{% endmacro %}

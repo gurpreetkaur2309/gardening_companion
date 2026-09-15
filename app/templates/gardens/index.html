@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field %}
+{% block title %}Your gardens — Gardening Companion{% endblock %}
+
+{% block content %}
+<div class="container-app" style="padding-top:1.75rem;max-width:880px">
+  <div class="page-head u-flex-between u-wrap">
+    <div>
+      <h1>Your gardens</h1>
+      <p>Group plants by where they actually live.</p>
+    </div>
+    <button class="btn btn--primary" type="button" data-modal-open="new-garden-modal">
+      <i class="fa-solid fa-plus"></i> New garden
+    </button>
+  </div>
+
+  <div class="card">
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Garden</th><th>Location</th><th>Plants</th><th>Created</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for g in gardens %}
+            <tr>
+              <td>
+                <a href="{{ url_for('dashboard.index', garden_id=g.id) }}"><strong>{{ g.name }}</strong></a>
+                {% if g.description %}<div class="u-tiny u-muted">{{ g.description }}</div>{% endif %}
+              </td>
+              <td class="u-muted">{{ g.location or '—' }}</td>
+              <td>{{ counts.get(g.id, 0) }}</td>
+              <td class="u-muted u-small">{{ g.created_at.strftime('%d %b %Y') }}</td>
+              <td>
+                <div class="table__actions">
+                  <a class="btn btn--ghost btn--sm" href="{{ url_for('gardens.edit', garden_id=g.id) }}">Edit</a>
+                  {% if gardens | length > 1 %}
+                    <form method="post" action="{{ url_for('gardens.delete', garden_id=g.id) }}"
+                          data-confirm="Delete '{{ g.name }}' and every plant in it? This can't be undone.">
+                      {{ confirm_form.csrf_token }}
+                      <button class="btn btn--ghost btn--sm" type="submit" style="color:var(--danger)">Delete</button>
+                    </form>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<dialog class="modal" id="new-garden-modal">
+  <form method="post" action="{{ url_for('gardens.create') }}">
+    {{ form.csrf_token }}
+    <div class="modal__head">
+      <h3>New garden</h3>
+      <button class="btn btn--ghost btn--icon" type="button" data-modal-close aria-label="Close">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="modal__body">
+      {{ field(form.name, placeholder="Balcony, Terrace, Windowsill…") }}
+      {{ field(form.location, placeholder="South-facing, indoors…") }}
+      {{ field(form.description, placeholder="Optional") }}
+    </div>
+    <div class="modal__foot">
+      <button class="btn btn--secondary" type="button" data-modal-close>Cancel</button>
+      <button class="btn btn--primary" type="submit">Create garden</button>
+    </div>
+  </form>
+</dialog>
+{% endblock %}

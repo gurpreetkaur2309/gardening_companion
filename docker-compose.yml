@@ -1,0 +1,100 @@
+# Full local stack: web + worker + beat + MongoDB + Redis + a fake SMTP inbox.
+#   docker compose up --build
+#   open http://localhost:5000        (app)
+#   open http://localhost:8025        (MailHog — every reminder lands here)
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Catches every outgoing email so reminders can be verified without a real
+  # SMTP account. Web UI on :8025.
+  mailhog:
+    image: mailhog/mailhog:latest
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    logging:
+      driver: none
+
+  web:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    env_file: .env
+    environment:
+      MONGO_URI: mongodb://mongo:27017/gardening_companion
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      MAIL_SERVER: mailhog
+      MAIL_PORT: "1025"
+      MAIL_USE_TLS: "false"
+      APP_BASE_URL: http://localhost:5000
+    volumes:
+      - uploads:/app/instance/uploads
+    depends_on:
+      mongo: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  worker:
+    build: .
+    restart: unless-stopped
+    command: celery -A celery_worker:celery worker --loglevel=info --concurrency=2
+    env_file: .env
+    environment:
+      MONGO_URI: mongodb://mongo:27017/gardening_companion
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      MAIL_SERVER: mailhog
+      MAIL_PORT: "1025"
+      MAIL_USE_TLS: "false"
+      APP_BASE_URL: http://localhost:5000
+    volumes:
+      - uploads:/app/instance/uploads
+    depends_on:
+      mongo: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  beat:
+    build: .
+    restart: unless-stopped
+    command: celery -A celery_worker:celery beat --loglevel=info
+    env_file: .env
+    environment:
+      MONGO_URI: mongodb://mongo:27017/gardening_companion
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      # Sweep every 5 minutes locally so reminders are observable during a demo;
+      # production uses the hourly default.
+      REMINDER_SWEEP_MINUTES: "5"
+    depends_on:
+      redis: { condition: service_healthy }
+
+volumes:
+  mongo-data:
+  redis-data:
+  uploads:

@@ -1,0 +1,59 @@
+{% extends "email/_base.html" %}
+{% block subject %}Your plants need attention{% endblock %}
+
+{% block body %}
+  <p style="margin:0 0 16px;font-size:18px;font-weight:600;">
+    Hi {{ user.display_name.split()[0] }},
+  </p>
+
+  {% if overdue %}
+    <p style="margin:0 0 20px;">
+      {{ overdue | length }} of your plants {{ 'is' if overdue | length == 1 else 'are' }} overdue,
+      and {{ tasks | length }} task{{ 's' if tasks | length != 1 }} need{{ '' if tasks | length != 1 else 's' }} doing.
+    </p>
+  {% else %}
+    <p style="margin:0 0 20px;">
+      {{ tasks | length }} task{{ 's' if tasks | length != 1 }} due today.
+    </p>
+  {% endif %}
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:22px;">
+    {% for task in tasks %}
+      <tr>
+        <td style="padding:11px 13px;background:{{ '#fbeee9' if task.days_overdue > 0 else '#f1f8f3' }};
+                   border-left:3px solid {{ '#c65f3d' if task.days_overdue > 0 else '#2f8757' }};
+                   border-radius:0 8px 8px 0;margin-bottom:8px;">
+          <div style="font-weight:600;font-size:15px;">
+            {{ '💧' if task.action == 'water' else '🌿' }}
+            {{ task.action_label }} {{ task.plant_name }}{% if task.quantity > 1 %} (×{{ task.quantity }}){% endif %}
+          </div>
+          <div style="font-size:13px;color:#6f6757;margin-top:2px;">
+            {{ task.garden }}
+            {% if task.days_overdue > 0 %}
+              · <strong style="color:#a54a2c;">{{ task.days_overdue }} day{{ 's' if task.days_overdue != 1 }} overdue</strong>
+            {% else %}
+              · due today
+            {% endif %}
+            {% if task.action == 'fertilize' %} · {{ task.fertilizer_type }}{% endif %}
+          </div>
+        </td>
+      </tr>
+      <tr><td style="height:8px;line-height:8px;">&nbsp;</td></tr>
+    {% endfor %}
+  </table>
+
+  <table role="presentation" cellpadding="0" cellspacing="0">
+    <tr>
+      <td style="background:#1f6b44;border-radius:8px;">
+        <a href="{{ base_url }}/dashboard/"
+           style="display:inline-block;padding:11px 22px;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;">
+          Open your dashboard
+        </a>
+      </td>
+    </tr>
+  </table>
+
+  <p style="margin:22px 0 0;font-size:13px;color:#6f6757;">
+    Tick things off in the app and the next due date moves forward automatically.
+  </p>
+{% endblock %}

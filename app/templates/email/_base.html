@@ -1,0 +1,41 @@
+{# Email layout. Table-based with inline styles — Gmail and Outlook both strip
+   <style> blocks and have no CSS variable support. #}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block subject %}Gardening Companion{% endblock %}</title>
+</head>
+<body style="margin:0;padding:0;background:#f5f2ec;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#211e18;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f2ec;padding:28px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+               style="max-width:560px;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e9e4da;">
+          <tr>
+            <td style="background:#1f6b44;padding:20px 24px;">
+              <span style="color:#ffffff;font-size:17px;font-weight:700;letter-spacing:-0.01em;">
+                🌱 Gardening Companion
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px 24px;font-size:15px;line-height:1.6;">
+              {% block body %}{% endblock %}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:16px 24px;background:#f5f2ec;border-top:1px solid #e9e4da;font-size:12px;color:#6f6757;">
+              {% block footer %}
+                You're receiving this because you have an account at Gardening Companion.
+                Turn reminders off for any plant from its page in the app.
+              {% endblock %}
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

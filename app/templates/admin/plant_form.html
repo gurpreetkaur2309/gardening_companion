@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, select_field, textarea_field, checkbox_field %}
+{% block title %}{{ 'Edit' if plant else 'Add' }} plant — Admin{% endblock %}
+
+{% block content %}
+<div class="container-app" style="padding-top:1.75rem;max-width:760px">
+  <a class="btn btn--ghost btn--sm u-mb-2" href="{{ url_for('admin.plants') }}">
+    <i class="fa-solid fa-arrow-left"></i> Catalog
+  </a>
+
+  <div class="card">
+    <div class="card__header">
+      <h1 style="font-size:1.4rem">
+        {% if request_id %}Approve request{% elif plant %}Edit {{ plant.common_name }}{% else %}Add a plant{% endif %}
+      </h1>
+      {% if plant and in_use %}
+        <span class="chip chip--info">{{ in_use }} planting{{ 's' if in_use != 1 }} use this</span>
+      {% endif %}
+    </div>
+
+    <div class="card__body">
+      {% if request_id %}
+        <div class="flash flash--info u-mb-3">
+          <i class="fa-solid fa-circle-info"></i>
+          <span>Saving this form approves the request and adds the species to the catalog.</span>
+        </div>
+      {% endif %}
+
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {{ form.csrf_token }}
+
+        <h4>Identity</h4>
+        {{ field(form.common_name, placeholder="Monstera") }}
+        <div class="field-row">
+          {{ field(form.scientific_name, placeholder="Monstera deliciosa") }}
+          {{ field(form.family, placeholder="Araceae") }}
+        </div>
+        <div class="field-row">
+          {{ field(form.genus, placeholder="Monstera") }}
+          <div class="field" style="display:flex;align-items:flex-end">
+            {{ checkbox_field(form.edible) }}
+          </div>
+        </div>
+
+        <h4 class="u-mt-3">Care schedule</h4>
+        <p class="u-small u-muted">
+          Leave blank and the AI fills these in the first time someone adds this plant.
+          Anything you set here wins over the AI.
+        </p>
+        <div class="field-row">
+          <div class="field">
+            {{ form.watering_days.label(class="field__label") }}
+            {{ form.watering_days(class="input", min=1, max=120, placeholder="7") }}
+            {% for e in form.watering_days.errors %}<div class="field__error">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="field">
+            {{ form.fertilizing_days.label(class="field__label") }}
+            {{ form.fertilizing_days(class="input", min=3, max=365, placeholder="30") }}
+            {% for e in form.fertilizing_days.errors %}<div class="field__error">{{ e }}</div>{% endfor %}
+          </div>
+        </div>
+        <div class="field-row">
+          {{ select_field(form.sunlight) }}
+          {{ field(form.fertilizer_type, placeholder="Balanced 10-10-10") }}
+        </div>
+        {{ field(form.care_notes, placeholder="The most common way people kill this plant.") }}
+
+        <h4 class="u-mt-3">Description</h4>
+        {{ textarea_field(form.description, placeholder="What it is, where it grows, what it likes.") }}
+        {{ textarea_field(form.sapling_description, placeholder="How to plant a sapling or cutting.") }}
+
+        <h4 class="u-mt-3">Photo</h4>
+        {% if plant and plant.image_key %}
+          <img src="{{ image_url(plant.image_key) }}" alt=""
+               style="width:160px;border-radius:var(--radius);margin-bottom:.75rem;display:block">
+        {% endif %}
+        <div class="field">
+          {{ form.image.label(class="field__label") }}
+          {{ form.image(class="input") }}
+          <div class="field__hint">
+            JPG, PNG, WebP or GIF. Converted to WebP and stored in S3 (or on disk if S3 isn't configured).
+          </div>
+          {% for e in form.image.errors %}<div class="field__error">{{ e }}</div>{% endfor %}
+        </div>
+
+        <div class="u-flex u-gap-1 u-mt-3">
+          <button class="btn btn--primary" type="submit">
+            {% if request_id %}Approve and add{% else %}Save plant{% endif %}
+          </button>
+          <a class="btn btn--secondary" href="{{ url_for('admin.plants') }}">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

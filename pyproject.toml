@@ -1,0 +1,73 @@
+[project]
+name = "gardening-companion"
+version = "1.0.0"
+description = "Track plant care schedules, get reminded before plants die, and ask an AI that knows your garden."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+
+dependencies = [
+    "Flask>=3.1,<4",
+    "Flask-Login>=0.6.3",
+    "Flask-Mail>=0.10",
+    "Flask-WTF>=1.2",
+    "Flask-Limiter>=3.8",
+    "WTForms>=3.1",
+    "email-validator>=2.2",
+    "pymongo>=4.10,<5",
+    "python-dotenv>=1.0",
+    "Werkzeug>=3.1",
+    "itsdangerous>=2.2",
+    "celery[redis]>=5.4",
+    "redis>=5.2",
+    "boto3>=1.35",
+    "Pillow>=11.0",
+    "google-genai>=1.0",
+    "pydantic>=2.10",
+    "Authlib>=1.4",
+    "requests>=2.32",
+    "gunicorn>=23.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "pytest-cov>=6.0",
+    "mongomock>=4.3",
+    "moto[s3]>=5.0",
+    "ruff>=0.8",
+    "mypy>=1.13",
+    "types-requests",
+]
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM", "RUF"]
+ignore = ["B008", "RUF012"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_unused_configs = true
+ignore_missing_imports = true
+check_untyped_defs = true
+exclude = ["tests/", "build/"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+markers = [
+    "integration: tests that need a live MongoDB",
+]

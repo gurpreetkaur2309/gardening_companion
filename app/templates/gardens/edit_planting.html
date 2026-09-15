@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, select_field, textarea_field, checkbox_field %}
+{% block title %}Edit {{ planting.display_name }} — Gardening Companion{% endblock %}
+
+{% block content %}
+<div class="container-app" style="padding-top:1.75rem;max-width:680px">
+  <a class="btn btn--ghost btn--sm u-mb-2" href="{{ url_for('dashboard.planting_detail', planting_id=planting.id) }}">
+    <i class="fa-solid fa-arrow-left"></i> Back
+  </a>
+
+  <div class="card">
+    <div class="card__header">
+      <h1 style="font-size:1.4rem">Edit {{ planting.display_name }}</h1>
+    </div>
+    <div class="card__body">
+      <form method="post" novalidate>
+        {{ form.csrf_token }}
+
+        <div class="field-row">
+          {{ field(form.nickname, placeholder=planting.plant.common_name if planting.plant else "") }}
+          <div class="field">
+            {{ form.quantity.label(class="field__label") }}
+            {{ form.quantity(class="input", min=1, max=999) }}
+          </div>
+        </div>
+
+        {{ select_field(form.age_stage) }}
+        <p class="field__hint u-mt-0" style="margin-top:-0.7rem">
+          Changing the life stage rescales the intervals below automatically.
+        </p>
+
+        <h4 class="u-mt-3">Care schedule</h4>
+        <p class="u-small u-muted">
+          Override these if you know better than the catalog — your climate, pot size and
+          soil all matter.
+        </p>
+        <div class="field-row">
+          <div class="field">
+            {{ form.watering_days.label(class="field__label") }}
+            {{ form.watering_days(class="input", min=1, max=120) }}
+            {% for e in form.watering_days.errors %}<div class="field__error">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="field">
+            {{ form.fertilizing_days.label(class="field__label") }}
+            {{ form.fertilizing_days(class="input", min=3, max=365) }}
+            {% for e in form.fertilizing_days.errors %}<div class="field__error">{{ e }}</div>{% endfor %}
+          </div>
+        </div>
+        <div class="field-row">
+          {{ field(form.fertilizer_type, placeholder="Balanced 10-10-10") }}
+          {{ select_field(form.sunlight) }}
+        </div>
+
+        {{ checkbox_field(form.reminders_enabled) }}
+        {{ textarea_field(form.notes, placeholder="Where it lives, how it's doing, anything worth remembering.") }}
+
+        <div class="u-flex u-gap-1">
+          <button class="btn btn--primary" type="submit">Save</button>
+          <a class="btn btn--secondary" href="{{ url_for('dashboard.planting_detail', planting_id=planting.id) }}">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

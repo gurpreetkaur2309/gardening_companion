@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, textarea_field %}
+{% block title %}Request a plant — Gardening Companion{% endblock %}
+
+{% block content %}
+<div class="container-app" style="padding-top:1.75rem;max-width:760px">
+  <div class="page-head">
+    <h1>Request a plant</h1>
+    <p>Not in the catalog? Tell us and an admin will add it — care data included.</p>
+  </div>
+
+  <div class="card u-mb-3">
+    <div class="card__body">
+      <form method="post" novalidate>
+        {{ form.csrf_token }}
+        {{ field(form.plant_name, placeholder="e.g. Curry leaf tree", autofocus=True) }}
+        {{ textarea_field(form.description, placeholder="Anything that helps identify it — where it grows, what it looks like, the scientific name if you know it.") }}
+        <button class="btn btn--primary" type="submit">Submit request</button>
+      </form>
+    </div>
+  </div>
+
+  {% if mine %}
+    <div class="card">
+      <div class="card__header"><h3>Your requests</h3></div>
+      <div class="card__body">
+        <ul class="timeline">
+          {% for r in mine %}
+            <li>
+              <span class="timeline__icon">
+                <i class="fa-solid {{ {'pending':'fa-hourglass-half','approved':'fa-check','rejected':'fa-xmark'}[r.status] }}"></i>
+              </span>
+              <span class="timeline__body">
+                <strong>{{ r.plant_name }}</strong>
+                <span class="chip {{ {'pending':'chip--due','approved':'chip--upcoming','rejected':'chip--overdue'}[r.status] }} u-tiny">
+                  {{ r.status }}
+                </span>
+                {% if r.review_note %}<div class="u-small u-muted">{{ r.review_note }}</div>{% endif %}
+              </span>
+              <span class="timeline__when">{{ r.created_at | timeago }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

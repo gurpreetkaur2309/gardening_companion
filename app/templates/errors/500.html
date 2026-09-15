@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Something broke — Gardening Companion{% endblock %}
+{% block content %}
+<div class="container-app" style="padding-block: 4rem">
+  <div class="empty" style="max-width:520px;margin:0 auto">
+    <div class="empty__icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    <h1 style="font-size:2.5rem;margin-bottom:.25rem">500</h1>
+    <p>Something went wrong on our side. The problem has been logged.</p>
+    {% if incident %}<p class="u-tiny u-faint">Reference: <code>{{ incident }}</code></p>{% endif %}
+    <a class="btn btn--primary" href="{{ url_for('main.home') }}">Back to safety</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Admin — Gardening Companion{% endblock %}
+
+{% block content %}
+<div class="container-app" style="padding-top:1.75rem">
+  <div class="page-head">
+    <h1>Admin console</h1>
+    <p>Curate the shared catalog, review requests and manage accounts.</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><span class="stat__value">{{ stats.users }}</span><span class="stat__label">Users</span>
+      <span class="stat__hint">{{ stats.admins }} admin{{ 's' if stats.admins != 1 }}</span></div>
+    <div class="stat"><span class="stat__value">{{ stats.plants }}</span><span class="stat__label">Catalog species</span></div>
+    <div class="stat"><span class="stat__value">{{ stats.plantings }}</span><span class="stat__label">Plantings</span></div>
+    <div class="stat {{ 'stat--warn' if stats.pending_requests }}">
+      <span class="stat__value">{{ stats.pending_requests }}</span><span class="stat__label">Pending requests</span>
+    </div>
+  </div>
+
+  <div class="u-flex u-gap-1 u-wrap u-mb-3">
+    <a class="btn btn--primary" href="{{ url_for('admin.create_plant') }}">
+      <i class="fa-solid fa-plus"></i> Add a plant
+    </a>
+    <a class="btn btn--secondary" href="{{ url_for('admin.plants') }}">
+      <i class="fa-solid fa-leaf"></i> Catalog
+    </a>
+    <a class="btn btn--secondary" href="{{ url_for('admin.requests') }}">
+      <i class="fa-solid fa-inbox"></i> Requests
+      {% if stats.pending_requests %}<span class="chip chip--due u-tiny">{{ stats.pending_requests }}</span>{% endif %}
+    </a>
+    <a class="btn btn--secondary" href="{{ url_for('admin.users') }}">
+      <i class="fa-solid fa-users"></i> Users
+    </a>
+    <a class="btn btn--ghost" href="{{ url_for('admin.reminders_preview') }}" target="_blank" rel="noopener">
+      <i class="fa-solid fa-envelope"></i> Preview next sweep
+    </a>
+  </div>
+
+  <div style="display:grid;gap:1.5rem;grid-template-columns:repeat(auto-fit,minmax(320px,1fr))">
+    <div class="card">
+      <div class="card__header">
+        <h3>Pending requests</h3>
+        <a class="u-small" href="{{ url_for('admin.requests') }}">View all</a>
+      </div>
+      <div class="card__body">
+        {% if pending %}
+          <ul class="timeline">
+            {% for r in pending %}
+              <li>
+                <span class="timeline__icon"><i class="fa-solid fa-hourglass-half"></i></span>
+                <span class="timeline__body">
+                  <strong>{{ r.plant_name }}</strong>
+                  <div class="u-tiny u-muted">
+                    from {{ r.requester.display_name if r.requester else 'a deleted user' }}
+                  </div>
+                </span>
+                <a class="btn btn--primary btn--sm"
+                   href="{{ url_for('admin.create_plant', request_id=r.id, common_name=r.plant_name, description=r.description or '') }}">
+                  Review
+                </a>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="u-muted u-small u-mb-0">Nothing waiting. 🌿</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card__header">
+        <h3>Newest accounts</h3>
+        <a class="u-small" href="{{ url_for('admin.users') }}">View all</a>
+      </div>
+      <div class="card__body">
+        <ul class="timeline">
+          {% for u in recent_users %}
+            <li>
+              <span class="timeline__icon">{{ u.initials }}</span>
+              <span class="timeline__body">
+                <strong>{{ u.display_name }}</strong>
+                <div class="u-tiny u-muted">{{ u.email }}</div>
+              </span>
+              <span class="timeline__when">
+                {% if u.is_admin %}<span class="chip chip--info u-tiny">admin</span>{% endif %}
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+{% from "_macros.html" import plant_card, empty_state, field, select_field %}
+{% block title %}Dashboard — Gardening Companion{% endblock %}
+
+{% block content %}
+<div class="container-app" style="padding-top:1.75rem">
+
+  <div class="page-head u-flex-between u-wrap">
+    <div>
+      <h1>Hello, {{ current_user.display_name.split()[0] }}</h1>
+      <p>
+        {% if buckets.needs_attention %}
+          {{ buckets.needs_attention }} plant{{ 's' if buckets.needs_attention != 1 }} need{{ '' if buckets.needs_attention != 1 else 's' }} attention.
+        {% elif buckets.total %}
+          Everything's on schedule. Nothing to do today.
+        {% else %}
+          Let's get your first plant in.
+        {% endif %}
+      </p>
+    </div>
+    <div class="u-flex u-gap-1 u-wrap">
+      <a class="btn btn--secondary" href="{{ url_for('gardens.catalog', garden_id=garden.id) }}">
+        <i class="fa-solid fa-magnifying-glass"></i> Browse catalog
+      </a>
+      <button class="btn btn--primary" type="button" data-modal-open="add-plant-modal">
+        <i class="fa-solid fa-plus"></i> Add a plant
+      </button>
+    </div>
+  </div>
+
+  {# --- Stats ------------------------------------------------------------ #}
+  <div class="stats">
+    <div class="stat {{ 'stat--alert' if summary.needs_water }}">
+      <span class="stat__value">{{ summary.needs_water }}</span>
+      <span class="stat__label">Need water</span>
+    </div>
+    <div class="stat {{ 'stat--warn' if summary.needs_fertilizer }}">
+      <span class="stat__value">{{ summary.needs_fertilizer }}</span>
+      <span class="stat__label">Need feeding</span>
+    </div>
+    <div class="stat">
+      <span class="stat__value">{{ summary.total_plants }}</span>
+      <span class="stat__label">Plants</span>
+      <span class="stat__hint">{{ summary.species }} species across {{ summary.gardens }} garden{{ 's' if summary.gardens != 1 }}</span>
+    </div>
+    <div class="stat {{ 'stat--good' if summary.streak >= 3 }}">
+      <span class="stat__value">{{ summary.streak }}</span>
+      <span class="stat__label">Day streak</span>
+      {% if summary.on_time_rate is not none %}
+        <span class="stat__hint">{{ (summary.on_time_rate * 100) | round | int }}% on time this month</span>
+      {% else %}
+        <span class="stat__hint">Log some care to start</span>
+      {% endif %}
+    </div>
+  </div>
+
+  {# --- Garden switcher -------------------------------------------------- #}
+  <div class="garden-bar">
+    <div class="garden-tabs">
+      {% for g in gardens %}
+        <a class="garden-tab {{ 'is-active' if g.id == garden.id }}"
+           href="{{ url_for('dashboard.index', garden_id=g.id) }}">
+          {{ g.name }}
+        </a>
+      {% endfor %}
+      <button class="garden-tab" type="button" data-modal-open="add-garden-modal">
+        <i class="fa-solid fa-plus"></i> New garden
+      </button>
+    </div>
+    <a class="btn btn--ghost btn--sm" href="{{ url_for('gardens.index') }}">
+      <i class="fa-solid fa-gear"></i> Manage
+    </a>
+  </div>
+
+  {# --- Week outlook ----------------------------------------------------- #}
+  {% if buckets.total %}
+    <section class="section">
+      <div class="section__head">
+        <h2 class="section__title"><i class="fa-solid fa-calendar-days u-faint"></i> Next seven days</h2>
+      </div>
+      <div class="week">
+        {% for day in week %}
+          <div class="week__day {{ 'is-today' if day.is_today }}">
+            <span class="week__dow">{{ day.date.strftime('%a') }}</span>
+            <span class="week__date">{{ day.date.day }}</span>
+            <div class="week__dots">
+              {% for _ in day.water[:6] %}<span class="week__dot week__dot--water" title="Water"></span>{% endfor %}
+              {% for _ in day.fertilize[:6] %}<span class="week__dot week__dot--fert" title="Feed"></span>{% endfor %}
+            </div>
+            {% if day.total > 12 %}<span class="week__more">+{{ day.total - 12 }}</span>{% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  {# --- Buckets ---------------------------------------------------------- #}
+  {% if not buckets.total %}
+    {{ empty_state(
+      "fa-seedling",
+      "No plants in " ~ garden.name ~ " yet",
+      "Add your first plant and we'll work out its watering and feeding schedule, then remind you when it's due.",
+      url_for('gardens.catalog', garden_id=garden.id),
+      "Browse the catalog") }}
+  {% else %}
+
+    {% if buckets.overdue %}
+      <section class="section section--overdue">
+        <div class="section__head">
+          <h2 class="section__title">
+            <i class="fa-solid fa-circle-exclamation" style="color:var(--urgent-overdue)"></i>
+            Overdue <span class="section__count">{{ buckets.overdue | length }}</span>
+          </h2>
+        </div>
+        <div class="plant-grid">
+          {% for planting in buckets.overdue %}
+            {{ plant_card(planting, image_url, care_form, confirm_form) }}
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+
+    {% if buckets.due_today %}
+      <section class="section section--due">
+        <div class="section__head">
+          <h2 class="section__title">
+            <i class="fa-solid fa-clock" style="color:var(--urgent-due)"></i>
+            Due today <span class="section__count">{{ buckets.due_today | length }}</span>
+          </h2>
+        </div>
+        <div class="plant-grid">
+          {% for planting in buckets.due_today %}
+            {{ plant_card(planting, image_url, care_form, confirm_form) }}
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+
+    {% if buckets.upcoming %}
+      <section class="section">
+        <div class="section__head">
+          <h2 class="section__title">
+            <i class="fa-solid fa-leaf" style="color:var(--urgent-upcoming)"></i>
+            {% if buckets.overdue or buckets.due_today %}All good{% else %}Your plants{% endif %}
+            <span class="section__count">{{ buckets.upcoming | length }}</span>
+          </h2>
+        </div>
+        <div class="plant-grid">
+          {% for planting in buckets.upcoming %}
+            {{ plant_card(planting, image_url, care_form, confirm_form) }}
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+  {% endif %}
+
+  {# --- Recent activity -------------------------------------------------- #}
+  {% if recent_activity %}
+    <section class="section">
+      <div class="card">
+        <div class="card__header">
+          <h3><i class="fa-solid fa-clock-rotate-left u-faint"></i> Recent activity</h3>
+        </div>
+        <div class="card__body">
+          <ul class="timeline">
+            {% for log in recent_activity %}
+              <li>
+                <span class="timeline__icon"><i class="fa-solid {{ log.action_enum.icon }}"></i></span>
+                <span class="timeline__body">
+                  <strong>{{ log.action_enum.label }}</strong>
+                  {% if log.note %}<span class="u-muted"> — {{ log.note }}</span>{% endif %}
+                  {% if log.was_late %}<span class="chip chip--overdue u-tiny">late</span>{% endif %}
+                </span>
+                <span class="timeline__when">{{ log.created_at | timeago }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </section>
+  {% endif %}
+</div>
+
+{# --- Add plant modal ---------------------------------------------------- #}
+<dialog class="modal" id="add-plant-modal">
+  <form method="post" action="{{ url_for('gardens.add_plant') }}">
+    {{ add_form.csrf_token }}
+    <input type="hidden" name="garden_id" value="{{ garden.id }}">
+
+    <div class="modal__head">
+      <h3>Add a plant to {{ garden.name }}</h3>
+      <button class="btn btn--ghost btn--icon" type="button" data-modal-close aria-label="Close">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="modal__body">
+      <div class="field combo" data-combo>
+        <label class="field__label" for="plant-search">Which plant?</label>
+        <input class="input" id="plant-search" type="text" data-combo-input
+               placeholder="Start typing — e.g. basil, monstera…"
+               autocomplete="off" role="combobox" aria-expanded="false"
+               aria-controls="plant-options" aria-autocomplete="list">
+        <input type="hidden" name="plant_id" data-combo-value required>
+        <ul class="combo__list" id="plant-options" data-combo-list hidden role="listbox">
+          {% for plant_id, name in catalog %}
+            <li class="combo__option" data-value="{{ plant_id }}" role="option">{{ name }}</li>
+          {% endfor %}
+          <li class="combo__empty" data-combo-empty hidden>
+            No match. <a href="{{ url_for('plants.request_plant') }}">Request this plant</a>
+          </li>
+        </ul>
+        <div class="field__hint">
+          Can't find it? <a href="{{ url_for('plants.request_plant') }}">Ask an admin to add it</a>.
+        </div>
+      </div>
+
+      <div class="field-row">
+        {{ select_field(add_form.age_stage) }}
+        <div class="field">
+          {{ add_form.quantity.label(class="field__label") }}
+          {{ add_form.quantity(class="input", min=1, max=999) }}
+        </div>
+      </div>
+
+      {{ field(add_form.nickname, placeholder="e.g. 'the one by the window'") }}
+    </div>
+
+    <div class="modal__foot">
+      <button class="btn btn--secondary" type="button" data-modal-close>Cancel</button>
+      <button class="btn btn--primary" type="submit">Add to garden</button>
+    </div>
+  </form>
+</dialog>
+
+{# --- Add garden modal --------------------------------------------------- #}
+<dialog class="modal" id="add-garden-modal">
+  <form method="post" action="{{ url_for('gardens.create') }}">
+    {{ garden_form.csrf_token }}
+    <div class="modal__head">
+      <h3>New garden</h3>
+      <button class="btn btn--ghost btn--icon" type="button" data-modal-close aria-label="Close">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="modal__body">
+      {{ field(garden_form.name, placeholder="Balcony, Terrace, Windowsill…") }}
+      {{ field(garden_form.location, placeholder="South-facing, indoors…") }}
+    </div>
+    <div class="modal__foot">
+      <button class="btn btn--secondary" type="button" data-modal-close>Cancel</button>
+      <button class="btn btn--primary" type="submit">Create garden</button>
+    </div>
+  </form>
+</dialog>
+{% endblock %}

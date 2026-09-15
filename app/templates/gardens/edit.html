@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, textarea_field %}
+{% block title %}Edit {{ garden.name }} — Gardening Companion{% endblock %}
+
+{% block content %}
+<div class="container-app" style="padding-top:1.75rem;max-width:600px">
+  <a class="btn btn--ghost btn--sm u-mb-2" href="{{ url_for('gardens.index') }}">
+    <i class="fa-solid fa-arrow-left"></i> All gardens
+  </a>
+  <div class="card">
+    <div class="card__header"><h1 style="font-size:1.4rem">Edit garden</h1></div>
+    <div class="card__body">
+      <form method="post" novalidate>
+        {{ form.csrf_token }}
+        {{ field(form.name) }}
+        {{ field(form.location, placeholder="South-facing balcony…") }}
+        {{ textarea_field(form.description) }}
+        <div class="u-flex u-gap-1">
+          <button class="btn btn--primary" type="submit">Save changes</button>
+          <a class="btn btn--secondary" href="{{ url_for('dashboard.index', garden_id=garden.id) }}">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

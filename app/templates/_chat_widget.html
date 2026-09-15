@@ -1,0 +1,47 @@
+{# Floating Sprout widget. Shares chat.js with the full-page view. #}
+<button class="chat-fab" type="button" data-chat-toggle aria-expanded="false"
+        aria-controls="chat-panel" aria-label="Ask Sprout, the plant assistant">
+  <i class="fa-solid fa-comment-dots chat-fab__open"></i>
+  <i class="fa-solid fa-xmark chat-fab__close"></i>
+</button>
+
+<section class="chat-panel" id="chat-panel" hidden aria-label="Ask Sprout">
+  <header class="chat-panel__head">
+    <span class="brand__mark"><i class="fa-solid fa-seedling"></i></span>
+    <div>
+      <div class="chat-panel__title">Sprout</div>
+      <div class="chat-panel__status">
+        {% if ai_enabled %}Knows what's in your garden{% else %}AI is not configured{% endif %}
+      </div>
+    </div>
+    <div class="chat-panel__actions">
+      <button class="btn btn--ghost btn--icon" type="button" data-chat-clear title="Clear conversation"
+              aria-label="Clear conversation">
+        <i class="fa-solid fa-trash-can"></i>
+      </button>
+    </div>
+  </header>
+
+  <div class="chat-log" id="chat-log" role="log" aria-live="polite" aria-atomic="false">
+    <div class="chat-empty" data-chat-empty>
+      <p class="u-mb-0"><strong>Hi! I'm Sprout.</strong><br>Ask me anything about your plants.</p>
+      <div class="chat-suggest">
+        <button type="button" data-chat-suggestion>What needs watering today?</button>
+        <button type="button" data-chat-suggestion>Why are my leaves turning yellow?</button>
+        <button type="button" data-chat-suggestion>How do I propagate a pothos?</button>
+      </div>
+    </div>
+  </div>
+
+  <form class="chat-form" id="chat-form" data-chat-form
+        data-send-url="{{ url_for('chat.send') }}"
+        data-history-url="{{ url_for('chat.history') }}"
+        data-clear-url="{{ url_for('chat.clear') }}"
+        data-csrf="{{ csrf_token() }}">
+    <input class="input" type="text" name="message" placeholder="Ask about your plants…"
+           autocomplete="off" maxlength="1000" aria-label="Your message" required>
+    <button class="btn btn--primary" type="submit" aria-label="Send">
+      <i class="fa-solid fa-paper-plane"></i>
+    </button>
+  </form>
+</section>

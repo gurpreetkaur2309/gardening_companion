@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="{% block description %}Track plant care schedules, get reminded before your plants suffer, and ask an AI that knows what's in your garden.{% endblock %}">
+  <title>{% block title %}Gardening Companion{% endblock %}</title>
+
+  <link rel="icon" href="{{ url_for('static', filename='img/favicon.svg') }}" type="image/svg+xml">
+
+  {# Theme is applied before first paint so a dark-mode user never sees a white flash. #}
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('gc-theme');
+        if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+      } catch (e) { /* private mode: fall back to the OS preference */ }
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container-app site-header__inner">
+      <a class="brand" href="{{ url_for('main.home') }}">
+        <span class="brand__mark"><i class="fa-solid fa-seedling"></i></span>
+        Gardening Companion
+      </a>
+
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Menu"
+              data-nav-toggle>
+        <i class="fa-solid fa-bars"></i>
+      </button>
+
+      <nav class="nav" id="primary-nav" aria-label="Primary">
+        {% if current_user.is_authenticated %}
+          <a class="nav__link {{ 'is-active' if request.blueprint == 'dashboard' }}" href="{{ url_for('dashboard.index') }}">
+            <i class="fa-solid fa-house"></i> Dashboard
+          </a>
+          <a class="nav__link {{ 'is-active' if request.blueprint == 'gardens' }}" href="{{ url_for('gardens.catalog') }}">
+            <i class="fa-solid fa-leaf"></i> Catalog
+          </a>
+          <a class="nav__link {{ 'is-active' if request.blueprint == 'chat' }}" href="{{ url_for('chat.index') }}">
+            <i class="fa-solid fa-comment-dots"></i> Ask Sprout
+          </a>
+          {% if current_user.is_admin %}
+            <a class="nav__link {{ 'is-active' if request.blueprint == 'admin' }}" href="{{ url_for('admin.index') }}">
+              <i class="fa-solid fa-shield-halved"></i> Admin
+              {% if pending_request_count %}<span class="nav__badge">{{ pending_request_count }}</span>{% endif %}
+            </a>
+          {% endif %}
+          <a class="nav__link {{ 'is-active' if request.blueprint == 'profile' }}" href="{{ url_for('profile.index') }}">
+            <i class="fa-solid fa-user"></i> {{ current_user.display_name.split()[0] }}
+          </a>
+          <a class="nav__link" href="{{ url_for('auth.logout') }}">Sign out</a>
+        {% else %}
+          <a class="nav__link" href="{{ url_for('auth.login') }}">Sign in</a>
+          <a class="btn btn--primary btn--sm" href="{{ url_for('auth.signup') }}">Get started</a>
+        {% endif %}
+        <button class="btn btn--ghost btn--icon" type="button" data-theme-toggle
+                aria-label="Switch between light and dark theme" title="Toggle theme">
+          <i class="fa-solid fa-circle-half-stroke"></i>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="container-app flashes" role="status" aria-live="polite">
+        {% for category, message in messages %}
+          {% set cat = category if category in ['success', 'danger', 'warning', 'info'] else 'info' %}
+          <div class="flash flash--{{ cat }}">
+            <i class="fa-solid {{ {'success': 'fa-circle-check', 'danger': 'fa-circle-exclamation', 'warning': 'fa-triangle-exclamation', 'info': 'fa-circle-info'}[cat] }}"></i>
+            <span>{{ message }}</span>
+            <button class="flash__close" type="button" aria-label="Dismiss" data-flash-close>
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <main id="main">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="container-app site-footer__inner">
+      <span>&copy; {{ now.year }} Gardening Companion</span>
+      <span class="u-flex u-gap-2 u-wrap">
+        <span>Flask · MongoDB · Celery · Gemini · AWS S3</span>
+        <span class="u-faint">v{{ app_version }}</span>
+      </span>
+    </div>
+  </footer>
+
+  {% if current_user.is_authenticated and request.blueprint != 'chat' %}
+    {% include "_chat_widget.html" %}
+  {% endif %}
+
+  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+  {% if current_user.is_authenticated %}
+    <script src="{{ url_for('static', filename='js/chat.js') }}" defer></script>
+  {% endif %}
+  {% block scripts %}{% endblock %}
+</body>
+</html>

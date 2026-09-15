@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% from "_macros.html" import empty_state %}
+{% block title %}Plant catalog — Gardening Companion{% endblock %}
+
+{% block content %}
+<div class="container-app" style="padding-top:1.75rem">
+  <div class="page-head">
+    <h1>Plant catalog</h1>
+    <p>Pick a species to add to <strong>{{ garden.name }}</strong>. Care schedules come with it.</p>
+  </div>
+
+  <div class="u-flex u-gap-1 u-wrap u-mb-3">
+    <div class="u-grow" style="min-width:240px">
+      <input class="input" type="search" data-filter-input
+             placeholder="Filter {{ plants | length }} plants…" aria-label="Filter plants">
+    </div>
+    <select class="select" style="width:auto" aria-label="Target garden"
+            onchange="window.location = this.value">
+      {% for g in gardens %}
+        <option value="{{ url_for('gardens.catalog', garden_id=g.id) }}"
+                {{ 'selected' if g.id == garden.id }}>Add to: {{ g.name }}</option>
+      {% endfor %}
+    </select>
+    <a class="btn btn--secondary" href="{{ url_for('plants.request_plant') }}">
+      <i class="fa-solid fa-plus"></i> Request a plant
+    </a>
+  </div>
+
+  {% if plants %}
+    <p class="u-small u-muted"><span data-filter-count>{{ plants | length }}</span> species</p>
+    <div class="plant-grid">
+      {% for plant in plants %}
+        <article class="plant-card" data-filter-item
+                 data-filter-text="{{ plant.common_name }} {{ plant.scientific_name or '' }} {{ plant.genus or '' }} {{ plant.family or '' }}">
+          <div class="plant-card__media">
+            <img src="{{ image_url(plant.image_key) }}" alt="" loading="lazy" width="320" height="200">
+          </div>
+          <div class="plant-card__body">
+            <h3 class="plant-card__title">{{ plant.common_name }}</h3>
+            {% if plant.scientific_name %}
+              <p class="plant-card__sub">{{ plant.scientific_name }}</p>
+            {% endif %}
+            <div class="plant-card__meta">
+              <span class="chip"><i class="fa-solid fa-droplet"></i> {{ plant.care.watering_days }}d</span>
+              <span class="chip"><i class="fa-solid fa-seedling"></i> {{ plant.care.fertilizing_days }}d</span>
+              <span class="chip"><i class="fa-solid {{ plant.care.sunlight_enum.icon }}"></i>
+                {{ plant.care.sunlight_enum.value | capitalize }}</span>
+              {% if plant.edible %}
+                <span class="chip chip--upcoming"><i class="fa-solid fa-utensils"></i> Edible</span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="plant-card__actions">
+            <form method="post" action="{{ url_for('gardens.add_plant') }}">
+              {{ add_form.csrf_token }}
+              <input type="hidden" name="plant_id" value="{{ plant.id }}">
+              <input type="hidden" name="garden_id" value="{{ garden.id }}">
+              <input type="hidden" name="age_stage" value="mature">
+              <input type="hidden" name="quantity" value="1">
+              <button class="btn btn--primary btn--sm" type="submit">
+                <i class="fa-solid fa-plus"></i> Add to {{ garden.name }}
+              </button>
+            </form>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+    <div data-filter-empty hidden class="u-mt-3">
+      {{ empty_state("fa-magnifying-glass", "Nothing matches that",
+         "Try a different word, or request the plant so an admin can add it.",
+         url_for('plants.request_plant'), "Request a plant") }}
+    </div>
+  {% else %}
+    {{ empty_state("fa-leaf", "The catalog is empty",
+       "An administrator needs to seed it — run `python manage.py seed-catalog`.") }}
+  {% endif %}
+</div>
+{% endblock %}

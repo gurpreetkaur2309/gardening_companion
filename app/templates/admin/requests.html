@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Plant requests — Admin{% endblock %}
+
+{% block content %}
+<div class="container-app" style="padding-top:1.75rem;max-width:920px">
+  <div class="page-head">
+    <h1>Plant requests</h1>
+    <p>Species users want added to the shared catalog.</p>
+  </div>
+
+  <div class="u-flex u-gap-1 u-mb-3">
+    {% for s in statuses %}
+      <a class="garden-tab {{ 'is-active' if s == status }}"
+         href="{{ url_for('admin.requests', status=s) }}">{{ s | capitalize }}</a>
+    {% endfor %}
+  </div>
+
+  {% if requests %}
+    <div style="display:grid;gap:1rem">
+      {% for r in requests %}
+        <div class="card">
+          <div class="card__body u-flex u-gap-2 u-wrap">
+            <div class="u-grow" style="min-width:240px">
+              <h3 style="margin-bottom:.25rem">{{ r.plant_name }}</h3>
+              <p class="u-tiny u-muted">
+                Requested by {{ r.requester.display_name if r.requester else 'a deleted user' }}
+                · {{ r.created_at | timeago }}
+              </p>
+              {% if r.description %}<p class="u-small u-mb-0">{{ r.description }}</p>{% endif %}
+              {% if r.review_note %}
+                <p class="u-small u-muted u-mt-2 u-mb-0"><strong>Note:</strong> {{ r.review_note }}</p>
+              {% endif %}
+            </div>
+
+            {% if r.is_pending %}
+              <div class="u-flex u-gap-1 u-wrap" style="align-items:flex-start">
+                <a class="btn btn--primary btn--sm"
+                   href="{{ url_for('admin.create_plant', request_id=r.id, common_name=r.plant_name, description=r.description or '') }}">
+                  <i class="fa-solid fa-check"></i> Approve
+                </a>
+                <form method="post" action="{{ url_for('admin.reject_request', request_id=r.id) }}"
+                      class="u-flex u-gap-1">
+                  {{ reject_form.csrf_token }}
+                  <input class="input" type="text" name="note" placeholder="Reason (optional)"
+                         style="width:170px" maxlength="280">
+                  <button class="btn btn--secondary btn--sm" type="submit">Reject</button>
+                </form>
+              </div>
+            {% else %}
+              <span class="chip {{ 'chip--upcoming' if r.status == 'approved' else 'chip--overdue' }}">
+                {{ r.status }}
+              </span>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty">
+      <div class="empty__icon"><i class="fa-solid fa-inbox"></i></div>
+      <h3>Nothing here</h3>
+      <p>No {{ status }} requests right now.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

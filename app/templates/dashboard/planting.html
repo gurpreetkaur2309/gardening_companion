@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% from "_macros.html" import due_chip %}
+{% block title %}{{ planting.display_name }} — Gardening Companion{% endblock %}
+
+{% block content %}
+<div class="container-app" style="padding-top:1.75rem">
+  <a class="btn btn--ghost btn--sm u-mb-2" href="{{ url_for('dashboard.index', garden_id=planting.garden_id) }}">
+    <i class="fa-solid fa-arrow-left"></i> Back to dashboard
+  </a>
+
+  <div style="display:grid;gap:1.75rem;grid-template-columns:minmax(0,320px) minmax(0,1fr)"
+       class="planting-layout">
+    {# --- Left: photo + facts ------------------------------------------- #}
+    <div>
+      <div class="card">
+        <img src="{{ image_url(planting.plant.image_key if planting.plant else None) }}"
+             alt="{{ planting.display_name }}"
+             style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:var(--radius) var(--radius) 0 0">
+        <div class="card__body">
+          <h1 style="font-size:1.5rem;margin-bottom:.15rem">{{ planting.display_name }}</h1>
+          {% if planting.plant %}
+            <p class="u-muted u-small" style="font-style:italic;margin-bottom:.75rem">
+              {{ planting.plant.scientific_name or planting.plant.common_name }}
+            </p>
+          {% endif %}
+
+          <div class="u-flex u-gap-1 u-wrap u-mb-2">
+            <span class="chip">{{ planting.age_stage_enum.label }}</span>
+            {% if planting.quantity > 1 %}<span class="chip">×{{ planting.quantity }}</span>{% endif %}
+            <span class="chip">
+              <i class="fa-solid {{ planting.schedule.sunlight_enum.icon }}"></i>
+              {{ planting.schedule.sunlight_enum.label }}
+            </span>
+            {% if planting.plant and planting.plant.edible %}
+              <span class="chip chip--upcoming"><i class="fa-solid fa-utensils"></i> Edible</span>
+            {% endif %}
+          </div>
+
+          <dl class="u-small" style="display:grid;grid-template-columns:auto 1fr;gap:.35rem .75rem;margin:0">
+            <dt class="u-muted">Planted</dt><dd style="margin:0">{{ planting.planted_at.strftime('%d %b %Y') }}</dd>
+            <dt class="u-muted">Water every</dt><dd style="margin:0">{{ planting.schedule.watering_days }} days</dd>
+            <dt class="u-muted">Feed every</dt><dd style="margin:0">{{ planting.schedule.fertilizing_days }} days</dd>
+            <dt class="u-muted">Fertilizer</dt><dd style="margin:0">{{ planting.schedule.fertilizer_type }}</dd>
+            <dt class="u-muted">Garden</dt><dd style="margin:0">
+              <a href="{{ url_for('dashboard.index', garden_id=planting.garden_id) }}">View garden</a>
+            </dd>
+          </dl>
+        </div>
+        <div class="card__footer u-flex u-gap-1">
+          <a class="btn btn--secondary btn--sm u-grow"
+             href="{{ url_for('gardens.edit_planting', planting_id=planting.id) }}">
+            <i class="fa-solid fa-pen"></i> Edit
+          </a>
+          <form method="post" action="{{ url_for('gardens.remove_planting', planting_id=planting.id) }}"
+                data-confirm="Remove {{ planting.display_name }} from your garden? Its care history goes too."
+                class="u-grow" style="display:flex">
+            {{ confirm_form.csrf_token }}
+            <input type="hidden" name="all" value="1">
+            <input type="hidden" name="name" value="{{ planting.display_name }}">
+            <button class="btn btn--ghost btn--sm u-grow" type="submit" style="color:var(--danger)">
+              <i class="fa-solid fa-trash-can"></i> Remove
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {% if planting.notes %}
+        <div class="card u-mt-2">
+          <div class="card__body">
+            <h4><i class="fa-solid fa-note-sticky u-faint"></i> Your notes</h4>
+            <p class="u-small u-mb-0" style="white-space:pre-wrap">{{ planting.notes }}</p>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    {# --- Right: actions + history -------------------------------------- #}
+    <div>
+      <div class="card u-mb-3">
+        <div class="card__header"><h3>Care status</h3></div>
+        <div class="card__body">
+          <div class="u-flex u-gap-1 u-wrap u-mb-3">
+            {{ due_chip(planting.days_until_water, "Water", "fa-droplet") }}
+            {{ due_chip(planting.days_until_fertilize, "Feed", "fa-seedling") }}
+            {% if not planting.reminders_enabled %}
+              <span class="chip chip--muted"><i class="fa-solid fa-bell-slash"></i> Reminders off</span>
+            {% endif %}
+          </div>
+
+          <form method="post" action="{{ url_for('dashboard.log_care', planting_id=planting.id) }}">
+            {{ care_form.csrf_token }}
+            <div class="field">
+              <label class="field__label" for="care-note">Add a note (optional)</label>
+              <input class="input" id="care-note" type="text" name="note" maxlength="280"
+                     placeholder="Soil was bone dry, moved into more light…">
+            </div>
+            <div class="u-flex u-gap-1 u-wrap">
+              <button class="btn {{ 'btn--primary' if planting.needs_water else 'btn--secondary' }}"
+                      type="submit" name="action" value="water">
+                <i class="fa-solid fa-droplet"></i> Watered
+              </button>
+              <button class="btn {{ 'btn--primary' if planting.needs_fertilizer else 'btn--secondary' }}"
+                      type="submit" name="action" value="fertilize">
+                <i class="fa-solid fa-seedling"></i> Fed
+              </button>
+              <button class="btn btn--secondary" type="submit" name="action" value="prune">
+                <i class="fa-solid fa-scissors"></i> Pruned
+              </button>
+              <button class="btn btn--secondary" type="submit" name="action" value="repot">
+                <i class="fa-solid fa-box"></i> Repotted
+              </button>
+              {% if planting.plant and planting.plant.edible %}
+                <button class="btn btn--secondary" type="submit" name="action" value="harvest">
+                  <i class="fa-solid fa-basket-shopping"></i> Harvested
+                </button>
+              {% endif %}
+            </div>
+          </form>
+
+          {% if pending %}
+            <div class="u-mt-3 u-flex u-gap-1 u-wrap">
+              {% for action in pending %}
+                <form method="post" action="{{ url_for('dashboard.snooze', planting_id=planting.id) }}">
+                  {{ confirm_form.csrf_token }}
+                  <input type="hidden" name="action" value="{{ action }}">
+                  <input type="hidden" name="days" value="2">
+                  <button class="btn btn--ghost btn--sm" type="submit">
+                    <i class="fa-solid fa-clock"></i> Snooze {{ action }} 2 days
+                  </button>
+                </form>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if planting.plant and (planting.plant.description or planting.plant.sapling_description) %}
+        <div class="card u-mb-3">
+          <div class="card__header"><h3>About {{ planting.plant.common_name }}</h3></div>
+          <div class="card__body">
+            {% if planting.plant.description %}<p>{{ planting.plant.description }}</p>{% endif %}
+            {% if planting.plant.sapling_description %}
+              <h4 class="u-mt-2">Planting a sapling</h4>
+              <p class="u-mb-0">{{ planting.plant.sapling_description }}</p>
+            {% endif %}
+            {% if planting.plant.care.notes %}
+              <p class="u-small u-muted u-mt-2 u-mb-0">
+                <i class="fa-solid fa-lightbulb"></i> {{ planting.plant.care.notes }}
+              </p>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+
+      <div class="card">
+        <div class="card__header">
+          <h3>History</h3>
+          <span class="u-tiny u-faint">{{ history | length }} entries</span>
+        </div>
+        <div class="card__body">
+          {% if history %}
+            <ul class="timeline">
+              {% for log in history %}
+                <li>
+                  <span class="timeline__icon"><i class="fa-solid {{ log.action_enum.icon }}"></i></span>
+                  <span class="timeline__body">
+                    <strong>{{ log.action_enum.label }}</strong>
+                    {% if log.was_late %}<span class="chip chip--overdue u-tiny">late</span>{% endif %}
+                    {% if log.note %}<div class="u-small u-muted">{{ log.note }}</div>{% endif %}
+                  </span>
+                  <span class="timeline__when" title="{{ log.created_at.strftime('%d %b %Y, %H:%M') }}">
+                    {{ log.created_at | timeago }}
+                  </span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="u-muted u-small u-mb-0">
+              Nothing logged yet. Use the buttons above and it'll show up here.
+            </p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  @media (max-width: 840px) {
+    .planting-layout { grid-template-columns: 1fr !important; }
+  }
+</style>
+{% endblock %}

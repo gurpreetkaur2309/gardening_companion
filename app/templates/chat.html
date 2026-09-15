@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Ask Sprout — Gardening Companion{% endblock %}
+
+{% block content %}
+<div class="container-app" style="padding-top:1.75rem;max-width:760px">
+  <div class="page-head">
+    <h1>Ask Sprout</h1>
+    <p>
+      {% if ai_enabled %}
+        Sprout can see your gardens and what's due, so ask about your own plants.
+      {% else %}
+        The AI assistant isn't configured on this instance. Everything else works normally.
+      {% endif %}
+    </p>
+  </div>
+
+  <div class="card" style="display:flex;flex-direction:column;height:min(640px,calc(100vh - 260px))">
+    <div class="chat-log" id="chat-log" role="log" aria-live="polite">
+      {% if history %}
+        {% for message in history %}
+          {% if message.role == 'user' %}
+            <div class="msg msg--user">
+              <div class="msg__bubble">{{ message.content }}</div>
+            </div>
+          {% else %}
+            <div class="msg msg--bot">
+              <div class="msg__who">Sprout</div>
+              <div class="msg__bubble">{{ message.content | replace('\n\n', '</p><p>') | replace('\n', '<br>') | safe }}</div>
+            </div>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+      <div class="chat-empty" data-chat-empty {{ 'hidden' if history }}>
+        <p class="u-mb-0"><strong>Hi! I'm Sprout.</strong><br>Ask me anything about your plants.</p>
+        <div class="chat-suggest">
+          <button type="button" data-chat-suggestion>What needs watering today?</button>
+          <button type="button" data-chat-suggestion>Why are my leaves turning yellow?</button>
+          <button type="button" data-chat-suggestion>How do I propagate a pothos?</button>
+          <button type="button" data-chat-suggestion>What should I do this week?</button>
+        </div>
+      </div>
+    </div>
+
+    <form class="chat-form" id="chat-form" data-chat-form
+          data-send-url="{{ url_for('chat.send') }}"
+          data-history-url="{{ url_for('chat.history') }}"
+          data-clear-url="{{ url_for('chat.clear') }}"
+          data-csrf="{{ csrf_token() }}">
+      <input class="input" type="text" name="message" placeholder="Ask about your plants…"
+             autocomplete="off" maxlength="1000" aria-label="Your message" required
+             {{ 'disabled' if not ai_enabled }}>
+      <button class="btn btn--primary" type="submit" {{ 'disabled' if not ai_enabled }}>
+        <i class="fa-solid fa-paper-plane"></i> Send
+      </button>
+      <button class="btn btn--ghost btn--icon" type="button" data-chat-clear
+              title="Clear conversation" aria-label="Clear conversation">
+        <i class="fa-solid fa-trash-can"></i>
+      </button>
+    </form>
+  </div>
+
+  <p class="u-tiny u-faint u-mt-2">
+    Sprout can be wrong about specific species. For a plant you're unsure of, check a second source.
+  </p>
+</div>
+{% endblock %}
