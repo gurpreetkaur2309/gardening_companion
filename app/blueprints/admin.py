@@ -14,6 +14,7 @@ from flask import (
     Blueprint,
     abort,
     flash,
+    has_request_context,
     jsonify,
     redirect,
     render_template,
@@ -47,8 +48,15 @@ def _guard():
 
 @admin_bp.app_context_processor
 def _inject_pending_count() -> dict[str, int]:
-    """Badge count in the nav — only computed for admins."""
-    if current_user.is_authenticated and getattr(current_user, "is_admin", False):
+    """Badge count in the nav — only computed for admins.
+
+    This is app-wide, so it also runs when Celery renders a reminder email with
+    no request in flight. ``current_user`` is ``None`` there, not an anonymous
+    user, so the request context has to be checked before touching it.
+    """
+    if not has_request_context():
+        return {"pending_request_count": 0}
+    if current_user and current_user.is_authenticated and current_user.is_admin:
         try:
             return {"pending_request_count": plant_request_repo.count_pending()}
         except Exception:

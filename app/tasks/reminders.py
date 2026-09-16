@@ -79,6 +79,7 @@ def collect_due_tasks(now: datetime | None = None) -> dict[Any, list[dict[str, A
                     "quantity": planting.quantity,
                     "action": str(action),
                     "action_label": action.label,
+                    "action_gerund": action.gerund,
                     "due_on": due.date(),
                     "days_overdue": max(0, (moment.date() - due.date()).days),
                     "fertilizer_type": planting.schedule.fertilizer_type,

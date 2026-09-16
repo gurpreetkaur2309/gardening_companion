@@ -30,6 +30,18 @@ class CareAction(StrEnum):
         }[self]
 
     @property
+    def gerund(self) -> str:
+        """For "X needs watering" — ``label`` is past tense and reads wrong there."""
+        return {
+            CareAction.WATER: "watering",
+            CareAction.FERTILIZE: "feeding",
+            CareAction.PRUNE: "pruning",
+            CareAction.REPOT: "repotting",
+            CareAction.HARVEST: "harvesting",
+            CareAction.NOTE: "a note",
+        }[self]
+
+    @property
     def icon(self) -> str:
         return {
             CareAction.WATER: "fa-droplet",

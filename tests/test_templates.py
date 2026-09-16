@@ -122,6 +122,29 @@ def test_error_pages_render(client):
 
 
 # --- Emails ----------------------------------------------------------------
+def test_emails_render_with_no_request_in_flight(app, user, overdue_planting):
+    """Celery renders reminder emails from a bare app context.
+
+    Regression test: an app-wide context processor read ``current_user``, which
+    is ``None`` (not an anonymous user) outside a request, so every scheduled
+    reminder failed with an AttributeError while the same template rendered
+    fine inside ``test_request_context()``.
+    """
+    from app.extensions import mail
+    from app.services import email_service
+    from app.tasks.reminders import collect_due_tasks
+
+    with app.app_context(), mail.record_messages() as outbox:
+        tasks = collect_due_tasks()[user.id]
+        assert email_service.send_care_digest(user, tasks) is True
+
+    assert len(outbox) == 1
+    message = outbox[0]
+    assert "</html>" in message.html
+    assert message.body  # the plain-text alternative rendered too
+    assert "needs watered" not in message.subject  # past tense reads wrong here
+
+
 def test_care_digest_email_renders_both_parts(app, user):
     from datetime import date
 

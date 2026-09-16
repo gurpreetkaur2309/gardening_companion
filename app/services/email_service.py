@@ -94,7 +94,8 @@ def send_care_digest(user: Any, tasks: list[dict[str, Any]]) -> bool:
     overdue = [t for t in tasks if t["days_overdue"] > 0]
 
     if len(tasks) == 1:
-        subject = f"🌱 {tasks[0]['plant_name']} needs {tasks[0]['action_label'].lower()}"
+        # "needs watering", not "needs watered" — action_label is past tense.
+        subject = f"🌱 {tasks[0]['plant_name']} needs {tasks[0]['action_gerund']}"
     elif overdue:
         subject = f"🌱 {len(tasks)} plants need attention ({len(overdue)} overdue)"
     else:
