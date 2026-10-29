@@ -4,6 +4,7 @@
     python manage.py ensure-indexes
     python manage.py seed-catalog [--file data/plants_seed.json]
     python manage.py import-catalog [--file data/plants_catalog.json]
+    python manage.py index-embeddings [--force]
     python manage.py create-admin [--email x --username y]
     python manage.py send-reminders [--dry-run]
     python manage.py demo-data --email you@example.com
@@ -94,6 +95,18 @@ def cmd_import_catalog(args: argparse.Namespace) -> int:
         f"({len(records)} in file)."
     )
     return 0
+
+
+def cmd_index_embeddings(args: argparse.Namespace) -> int:
+    from app.services import search_service
+
+    with app.app_context():
+        result = search_service.reindex(force=args.force)
+    print(
+        f"Embeddings: {result.embedded} embedded, {result.skipped} up to date, "
+        f"{result.failed} failed, {result.removed} orphans removed ({result.total} species)."
+    )
+    return 1 if result.failed else 0
 
 
 def cmd_create_admin(args: argparse.Namespace) -> int:
@@ -277,6 +290,7 @@ COMMANDS = {
     "ensure-indexes": (cmd_ensure_indexes, "Create every declared MongoDB index"),
     "seed-catalog": (cmd_seed_catalog, "Load the curated plant catalog"),
     "import-catalog": (cmd_import_catalog, "Bulk-load pipeline output without overwriting"),
+    "index-embeddings": (cmd_index_embeddings, "Embed new/changed species for semantic search"),
     "create-admin": (cmd_create_admin, "Create or promote an admin account"),
     "send-reminders": (cmd_send_reminders, "Run the care-reminder sweep now"),
     "demo-data": (cmd_demo_data, "Populate an account with sample plantings"),
@@ -297,6 +311,8 @@ def main() -> int:
             cmd.add_argument("--file", default="data/plants_seed.json")
         elif name == "import-catalog":
             cmd.add_argument("--file", default="data/plants_catalog.json")
+        elif name == "index-embeddings":
+            cmd.add_argument("--force", action="store_true", help="Re-embed every species")
         elif name == "create-admin":
             cmd.add_argument("--email")
             cmd.add_argument("--username")

@@ -101,6 +101,33 @@ water sooner. Returns the updated planting.
 
 Search the shared species catalog. `limit` defaults to 50, capped at 200.
 
+### `GET /catalog/search?q=&mode=&limit=`
+
+Hybrid keyword + semantic search over the catalog. Rate-limited to 60/minute.
+
+| Param | Notes |
+|---|---|
+| `q` | Required, up to 200 characters. Natural language works: `pet-safe low light`. |
+| `mode` | `hybrid` (default), `keyword` or `semantic`. |
+| `limit` | 1–50, default 20. |
+
+```json
+{
+  "query": "dark corner",
+  "semantic_used": true,
+  "count": 1,
+  "results": [
+    { "common_name": "Boston Fern", "...": "...",
+      "score": 0.01639, "matched_by": ["semantic"], "similarity": 0.8123 }
+  ]
+}
+```
+
+`score` is the fused reciprocal-rank score (only meaningful relative to other
+results); `similarity` is the raw cosine similarity when semantic search
+contributed. If embeddings are unavailable the endpoint still answers from
+keywords and reports `"semantic_used": false`.
+
 ### `GET /week`
 
 A seven-day outlook. Anything already overdue is folded into today's entry

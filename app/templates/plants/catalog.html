@@ -10,10 +10,16 @@
   </div>
 
   <div class="u-flex u-gap-1 u-wrap u-mb-3">
-    <div class="u-grow" style="min-width:240px">
-      <input class="input" type="search" data-filter-input
-             placeholder="Filter {{ plants | length }} plants…" aria-label="Filter plants">
-    </div>
+    <form class="u-grow" style="min-width:240px" method="get" role="search"
+          action="{{ url_for('gardens.catalog') }}">
+      <input type="hidden" name="garden_id" value="{{ garden.id }}">
+      {# Live text filtering only makes sense on the unsearched list; on a
+         search result it would hide semantic matches that share no words. #}
+      <input class="input" type="search" name="q" value="{{ query }}"
+             {% if not query %}data-filter-input{% endif %}
+             placeholder="Search by name or need — e.g. “pet-safe low light”"
+             aria-label="Search plants" maxlength="200">
+    </form>
     <select class="select" style="width:auto" aria-label="Target garden"
             onchange="window.location = this.value">
       {% for g in gardens %}
@@ -27,7 +33,15 @@
   </div>
 
   {% if plants %}
-    <p class="u-small u-muted"><span data-filter-count>{{ plants | length }}</span> species</p>
+    <p class="u-small u-muted">
+      {% if query %}
+        <span data-filter-count>{{ plants | length }}</span> best matches for “{{ query }}”
+        {% if semantic_used %}· ranked by meaning and keywords{% else %}· keyword match{% endif %}
+        · <a href="{{ url_for('gardens.catalog', garden_id=garden.id) }}">Clear</a>
+      {% else %}
+        <span data-filter-count>{{ plants | length }}</span> species — press Enter to search by meaning
+      {% endif %}
+    </p>
     <div class="plant-grid">
       {% for plant in plants %}
         <article class="plant-card" data-filter-item
@@ -71,8 +85,14 @@
          url_for('plants.request_plant'), "Request a plant") }}
     </div>
   {% else %}
+    {% if query %}
+      {{ empty_state("fa-magnifying-glass", "Nothing matches that",
+         "Try different words, or request the plant so an admin can add it.",
+         url_for('plants.request_plant'), "Request a plant") }}
+    {% else %}
     {{ empty_state("fa-leaf", "The catalog is empty",
        "An administrator needs to seed it — run `python manage.py seed-catalog`.") }}
+    {% endif %}
   {% endif %}
 </div>
 {% endblock %}

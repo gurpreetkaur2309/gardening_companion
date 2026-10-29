@@ -15,5 +15,6 @@ boto3>=1.35
 Pillow>=11.0
 google-genai>=1.0
 pydantic>=2.10
+numpy>=2.0
 requests>=2.32
 gunicorn>=23.0

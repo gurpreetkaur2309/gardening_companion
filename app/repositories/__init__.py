@@ -7,6 +7,7 @@ database: ``UserRepository(test_db)``.
 
 from .care_log_repo import CareLogRepository
 from .chat_repo import ChatRepository
+from .embedding_repo import EmbeddingRepository
 from .garden_plant_repo import GardenPlantRepository
 from .garden_repo import GardenRepository
 from .plant_repo import PlantRepository
@@ -22,10 +23,12 @@ care_log_repo = CareLogRepository()
 plant_request_repo = PlantRequestRepository()
 chat_repo = ChatRepository()
 reminder_repo = ReminderRepository()
+embedding_repo = EmbeddingRepository()
 
 __all__ = [
     "CareLogRepository",
     "ChatRepository",
+    "EmbeddingRepository",
     "GardenPlantRepository",
     "GardenRepository",
     "PlantRepository",
@@ -34,6 +37,7 @@ __all__ = [
     "UserRepository",
     "care_log_repo",
     "chat_repo",
+    "embedding_repo",
     "garden_plant_repo",
     "garden_repo",
     "plant_repo",

@@ -11,10 +11,11 @@ from flask import Blueprint, jsonify, request
 from flask_login import current_user, login_required
 
 from ..errors import AppError
+from ..extensions import limiter
 from ..models import CareAction
 from ..repositories import care_log_repo, garden_plant_repo, plant_repo
 from ..security import parse_object_id
-from ..services import care_service, garden_service, storage_service
+from ..services import care_service, garden_service, search_service, storage_service
 
 api_bp = Blueprint("api", __name__, url_prefix="/api/v1")
 
@@ -117,6 +118,41 @@ def catalog():
             p.to_public_dict(image_url=storage_service.image_url(p.image_key)) for p in plants
         ],
         count=len(plants),
+    )
+
+
+@api_bp.route("/catalog/search")
+@login_required
+@limiter.limit("60 per minute")
+def catalog_search():
+    """Hybrid keyword + semantic search. ``mode`` = hybrid | keyword | semantic."""
+    query = request.args.get("q", "").strip()
+    if not query:
+        return jsonify(error="Provide a search query with ?q="), 400
+    if len(query) > 200:
+        return jsonify(error="Keep queries under 200 characters."), 400
+    mode = request.args.get("mode", "hybrid")
+    if mode not in ("hybrid", "keyword", "semantic"):
+        return jsonify(error="mode must be hybrid, keyword or semantic"), 400
+    try:
+        limit = max(1, min(int(request.args.get("limit", 20)), 50))
+    except (TypeError, ValueError):
+        limit = 20
+
+    results = search_service.search(query, limit=limit, mode=mode)
+    return jsonify(
+        query=results.query,
+        semantic_used=results.semantic_used,
+        count=len(results.hits),
+        results=[
+            {
+                **h.plant.to_public_dict(image_url=storage_service.image_url(h.plant.image_key)),
+                "score": round(h.score, 5),
+                "matched_by": h.sources,
+                "similarity": None if h.similarity is None else round(h.similarity, 4),
+            }
+            for h in results.hits
+        ],
     )
 
 

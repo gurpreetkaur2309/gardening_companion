@@ -10,7 +10,7 @@ from ..forms import AddPlantForm, ConfirmForm, EditPlantingForm, GardenForm
 from ..models import AgeStage
 from ..repositories import plant_repo
 from ..security import parse_object_id
-from ..services import garden_service, storage_service
+from ..services import garden_service, search_service, storage_service
 
 gardens_bp = Blueprint("gardens", __name__, url_prefix="/gardens")
 
@@ -243,8 +243,14 @@ def move_planting(planting_id: str):
 @login_required
 def catalog():
     """Browse the shared species catalog and add straight from a card."""
-    query = request.args.get("q", "").strip()
-    plants = plant_repo.list_all(search=query or None, limit=200)
+    query = request.args.get("q", "").strip()[:200]
+    semantic_used = False
+    if query:
+        results = search_service.search(query, limit=60)
+        plants = [h.plant for h in results.hits]
+        semantic_used = results.semantic_used
+    else:
+        plants = plant_repo.list_all(limit=200)
     garden, gardens = garden_service.resolve_active_garden(
         current_user.id, request.args.get("garden_id")
     )
@@ -252,6 +258,7 @@ def catalog():
         "plants/catalog.html",
         plants=plants,
         query=query,
+        semantic_used=semantic_used,
         garden=garden,
         gardens=gardens,
         add_form=AddPlantForm(garden_id=str(garden.id)),

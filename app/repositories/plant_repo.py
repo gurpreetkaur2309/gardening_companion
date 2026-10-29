@@ -61,6 +61,18 @@ class PlantRepository(BaseRepository):
         )
         return [p for p in (Plant.from_doc(d) for d in cursor) if p]
 
+    def find_by_terms(self, terms: list[str], *, limit: int = 1000) -> list[Plant]:
+        """Plants whose name, scientific name or genus contains *any* of ``terms``."""
+        if not terms:
+            return []
+        clauses = [
+            {field: {"$regex": re.escape(term), "$options": "i"}}
+            for term in terms
+            for field in ("common_name", "scientific_name", "genus")
+        ]
+        cursor = self.collection.find({"$or": clauses}).limit(limit)
+        return [p for p in (Plant.from_doc(d) for d in cursor) if p]
+
     def list_choices(self) -> list[tuple[str, str]]:
         """Lightweight (id, name) pairs for the add-plant picker."""
         cursor = self.collection.find({}, {"common_name": 1}).sort("common_name", ASCENDING)

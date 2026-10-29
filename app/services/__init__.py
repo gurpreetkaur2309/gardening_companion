@@ -11,6 +11,7 @@ from . import (
     email_service,
     garden_service,
     gemini_service,
+    search_service,
     storage_service,
 )
 
@@ -21,5 +22,6 @@ __all__ = [
     "email_service",
     "garden_service",
     "gemini_service",
+    "search_service",
     "storage_service",
 ]
