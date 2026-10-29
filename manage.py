@@ -3,6 +3,7 @@
 
     python manage.py ensure-indexes
     python manage.py seed-catalog [--file data/plants_seed.json]
+    python manage.py import-catalog [--file data/plants_catalog.json]
     python manage.py create-admin [--email x --username y]
     python manage.py send-reminders [--dry-run]
     python manage.py demo-data --email you@example.com
@@ -74,6 +75,24 @@ def cmd_seed_catalog(args: argparse.Namespace) -> int:
                 updated += 1
 
     print(f"Catalog seeded: {created} added, {updated} updated ({len(records)} in file).")
+    return 0
+
+
+def cmd_import_catalog(args: argparse.Namespace) -> int:
+    from app.services import catalog_service
+
+    path = Path(args.file)
+    if not path.exists():
+        print(f"No such file: {path}  (generate it with: python -m pipeline run)", file=sys.stderr)
+        return 1
+
+    records = json.loads(path.read_text())
+    with app.app_context():
+        created, filled, unchanged = catalog_service.import_records(records)
+    print(
+        f"Catalog import: {created} added, {filled} filled in, {unchanged} unchanged "
+        f"({len(records)} in file)."
+    )
     return 0
 
 
@@ -257,6 +276,7 @@ def cmd_check(_args: argparse.Namespace) -> int:
 COMMANDS = {
     "ensure-indexes": (cmd_ensure_indexes, "Create every declared MongoDB index"),
     "seed-catalog": (cmd_seed_catalog, "Load the curated plant catalog"),
+    "import-catalog": (cmd_import_catalog, "Bulk-load pipeline output without overwriting"),
     "create-admin": (cmd_create_admin, "Create or promote an admin account"),
     "send-reminders": (cmd_send_reminders, "Run the care-reminder sweep now"),
     "demo-data": (cmd_demo_data, "Populate an account with sample plantings"),
@@ -275,6 +295,8 @@ def main() -> int:
         cmd = sub.add_parser(name, help=help_text)
         if name == "seed-catalog":
             cmd.add_argument("--file", default="data/plants_seed.json")
+        elif name == "import-catalog":
+            cmd.add_argument("--file", default="data/plants_catalog.json")
         elif name == "create-admin":
             cmd.add_argument("--email")
             cmd.add_argument("--username")

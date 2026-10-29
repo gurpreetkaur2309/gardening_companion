@@ -228,3 +228,40 @@ def reject_request(
     )
     refreshed = plant_request_repo.get(request_id)
     return refreshed or request
+
+
+# ---------------------------------------------------------------------------
+# Bulk import (data pipeline output)
+# ---------------------------------------------------------------------------
+def import_records(records: list[dict[str, Any]]) -> tuple[int, int, int]:
+    """Load pipeline records. Returns ``(created, filled, unchanged)``.
+
+    Existing species are only ever *filled in* (see ``upsert_fill_only``), so
+    re-importing a fresh scrape cannot clobber curated or admin-edited data.
+    A record without ``care`` keeps the default source, which makes the first
+    user to add it trigger the one-time AI lookup.
+    """
+    created = filled = unchanged = 0
+    for record in records:
+        care = record.get("care")
+        plant = Plant(
+            _id=ObjectId(),
+            common_name=record["common_name"],
+            scientific_name=record.get("scientific_name"),
+            family=record.get("family"),
+            genus=record.get("genus"),
+            edible=bool(record.get("edible", False)),
+            description=record.get("description"),
+            sapling_description=record.get("sapling_description"),
+            image_key=record.get("image_key"),
+            care=PlantCare.from_doc(care),
+            care_source=(record.get("care_source") if care else None) or CareSource.DEFAULT,
+        )
+        was_created, changed = plant_repo.upsert_fill_only(plant)
+        if was_created:
+            created += 1
+        elif changed:
+            filled += 1
+        else:
+            unchanged += 1
+    return created, filled, unchanged
