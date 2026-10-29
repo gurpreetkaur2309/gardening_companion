@@ -231,6 +231,16 @@ def fake_gemini(app):
                 )
             return "A helpful test answer about plants."
 
+        def embed(self, texts, *, task_type="RETRIEVAL_DOCUMENT"):
+            # Deterministic, text-dependent vectors so similarity tests are stable.
+            import hashlib
+
+            def vec(t):
+                h = hashlib.sha256(t.lower().encode()).digest()
+                return [b / 255 for b in h[:16]]
+
+            return [vec(t) for t in texts]
+
     fake = FakeClient()
     app.extensions["gemini"] = fake
     return fake

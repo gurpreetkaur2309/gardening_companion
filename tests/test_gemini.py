@@ -148,3 +148,12 @@ def test_chat_context_of_an_empty_account_says_so(app, user):
         context = care_service.build_chat_context(user.id, "Nobody")
 
     assert "none added yet" in context
+
+
+def test_fake_client_satisfies_the_llm_protocol(app, fake_gemini):
+    from app.services.llm import LLMClient
+
+    fake_gemini.model = "fake"
+    assert isinstance(fake_gemini, LLMClient)
+    vectors = fake_gemini.embed(["monstera", "basil"])
+    assert len(vectors) == 2 and vectors[0] != vectors[1]
