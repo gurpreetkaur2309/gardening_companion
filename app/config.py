@@ -78,7 +78,7 @@ class BaseConfig:
 
     # --- Gemini ---
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or None
-    GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+    GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-lite-latest")
     GEMINI_TIMEOUT_SECONDS = _int("GEMINI_TIMEOUT_SECONDS", 30)
 
     # --- Storage / S3 ---
