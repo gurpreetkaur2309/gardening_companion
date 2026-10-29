@@ -152,7 +152,7 @@ def init_app(app: Flask) -> None:
     try:
         app.extensions["gemini"] = GeminiClient(
             api_key=api_key,
-            model=app.config.get("GEMINI_MODEL", "gemini-2.0-flash"),
+            model=app.config.get("GEMINI_MODEL", "gemini-flash-lite-latest"),
             timeout_seconds=app.config.get("GEMINI_TIMEOUT_SECONDS", 30),
         )
         app.logger.info("Gemini: enabled (model=%s)", app.config.get("GEMINI_MODEL"))

@@ -338,6 +338,8 @@ def store_upload(file_obj: IO[bytes], *, prefix: str = "plants") -> str:
 
 def image_url(key: str | None, *, fallback: str | None = None) -> str | None:
     """Resolve a stored key to a URL, or a placeholder when there is none."""
+    if key and key.startswith("https://"):
+        return key
     if key:
         resolved = get_storage().url_for_key(key)
         if resolved:
@@ -348,7 +350,7 @@ def image_url(key: str | None, *, fallback: str | None = None) -> str | None:
 
 
 def delete_image(key: str | None) -> bool:
-    if not key:
+    if not key or key.startswith("https://"):
         return False
     return get_storage().delete(key)
 
@@ -357,4 +359,4 @@ def resolve_image_urls(items: list[Any], attr: str = "image_key") -> dict[str, s
     """Resolve many keys at once, keyed by the key itself (deduplicated)."""
     keys = {getattr(item, attr, None) for item in items}
     storage = get_storage()
-    return {k: storage.url_for_key(k) for k in keys if k}
+    return {k: k if k.startswith("https://") else storage.url_for_key(k) for k in keys if k}

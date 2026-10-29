@@ -61,6 +61,7 @@ def cmd_seed_catalog(args: argparse.Namespace) -> int:
                 edible=bool(record.get("edible", False)),
                 description=record.get("description"),
                 sapling_description=record.get("sapling_description"),
+                image_key=record.get("image_key"),
                 care=PlantCare.from_doc(record.get("care")),
                 # Seed data is hand-checked, so it outranks anything the AI
                 # would infer and is never overwritten by a lookup.
