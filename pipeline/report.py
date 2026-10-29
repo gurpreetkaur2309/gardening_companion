@@ -19,6 +19,7 @@ def build_report(
     http_stats: dict[str, int] | None = None,
 ) -> dict[str, Any]:
     n = len(final) or 1
+    enriched = [p for p in final if p.provenance.get("enrichment")]
     return {
         "funnel": {
             "candidates": candidates,
@@ -36,6 +37,11 @@ def build_report(
             ),
             "edible": round(sum(1 for p in final if p.edible) / n, 3),
             "with_care": round(sum(1 for p in final if p.care) / n, 3),
+        },
+        "enrichment": {
+            "enriched": len(enriched),
+            "confidence": dict(Counter(p.provenance["enrichment"]["confidence"] for p in enriched)),
+            "relevance": dict(Counter(p.provenance["enrichment"]["relevance"] for p in enriched)),
         },
         "top_families": dict(Counter(p.family for p in final).most_common(10)),
         "http": http_stats or {},
@@ -60,6 +66,12 @@ def render_markdown(report: dict[str, Any]) -> str:
         "## Completeness of the final set",
         "",
         *(f"- {k.replace('_', ' ')}: {v:.0%}" for k, v in report["completeness"].items()),
+        "",
+        "## AI enrichment",
+        "",
+        f"- records enriched: {report['enrichment']['enriched']}",
+        f"- confidence: {report['enrichment']['confidence']}",
+        f"- relevance: {report['enrichment']['relevance']}",
         "",
         "## Top families",
         "",
