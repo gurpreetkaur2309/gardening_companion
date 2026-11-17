@@ -142,7 +142,7 @@ def cmd_load(args: argparse.Namespace, p: dict[str, Path], http: CachedHttp) -> 
     )
 
     report = build_report(
-        candidates=len(p["candidates"].read_text().split()) if p["candidates"].exists() else 0,
+        candidates=len(p["candidates"].read_text().splitlines()) if p["candidates"].exists() else 0,
         extracted=_count(p["raw"]),
         cleaned=_count(p["clean"]),
         rejected=_load_rejects(args.workdir),
