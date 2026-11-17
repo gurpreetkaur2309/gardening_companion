@@ -247,7 +247,12 @@ def enrich_rows(
 
     out: list[dict[str, Any]] = []
     with ThreadPoolExecutor(max_workers=workers) as pool:
-        for kept, reject in pool.map(one, rows):
+        for i, (kept, reject) in enumerate(pool.map(one, rows), start=1):
+            if i % 25 == 0 or i == len(rows):
+                logger.info(
+                    "enrich progress: %d/%d (%d API calls, %d cached)",
+                    i, len(rows), enricher.calls, enricher.cache_hits,
+                )  # fmt: skip
             if reject:
                 rejected.append(reject)
             if kept is not None:
