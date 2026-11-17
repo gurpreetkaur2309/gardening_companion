@@ -99,12 +99,15 @@ class GeminiClient:
         timeout_seconds: int = 30,
         embed_model: str = "gemini-embedding-001",
         embed_dimensions: int = 768,
+        embed_per_minute: int | None = 90,
     ) -> None:
         from google import genai  # imported lazily: optional dependency
 
         self.model = model
         self.embed_model = embed_model
         self.embed_dimensions = embed_dimensions
+        # The free tier meters embeddings per *text* (100/min), not per request.
+        self.embed_per_minute = embed_per_minute
         self._genai = genai
         self._client = genai.Client(
             api_key=api_key,
@@ -197,6 +200,7 @@ def init_app(app: Flask) -> None:
             timeout_seconds=app.config.get("GEMINI_TIMEOUT_SECONDS", 30),
             embed_model=app.config.get("GEMINI_EMBED_MODEL", "gemini-embedding-001"),
             embed_dimensions=app.config.get("GEMINI_EMBED_DIMENSIONS", 768),
+            embed_per_minute=app.config.get("GEMINI_EMBED_PER_MINUTE", 90),
         )
         app.logger.info("Gemini: enabled (model=%s)", app.config.get("GEMINI_MODEL"))
     except Exception:

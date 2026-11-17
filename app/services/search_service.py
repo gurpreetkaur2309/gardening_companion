@@ -18,6 +18,7 @@ import hashlib
 import logging
 import re
 import threading
+import time
 from collections import OrderedDict
 from dataclasses import dataclass, field
 from typing import Protocol
@@ -183,9 +184,15 @@ def reindex(*, force: bool = False, batch_size: int = EMBED_BATCH) -> ReindexRes
         else:
             pending.append((plant, text, digest))
 
+    per_minute = getattr(client, "embed_per_minute", None) or 0
     for start in range(0, len(pending), batch_size):
         batch = pending[start : start + batch_size]
-        vectors = client.embed([t for _, t, _ in batch], task_type="RETRIEVAL_DOCUMENT")
+        texts = [t for _, t, _ in batch]
+        vectors = client.embed(texts, task_type="RETRIEVAL_DOCUMENT")
+        if vectors is None and per_minute:
+            # Most likely a per-minute quota: wait it out once, then retry.
+            time.sleep(60)
+            vectors = client.embed(texts, task_type="RETRIEVAL_DOCUMENT")
         if vectors is None:
             result.failed += len(batch)
             continue
@@ -194,6 +201,9 @@ def reindex(*, force: bool = False, batch_size: int = EMBED_BATCH) -> ReindexRes
             model=model_tag,
         )
         result.embedded += len(batch)
+        if per_minute and start + batch_size < len(pending):
+            time.sleep(len(batch) * 60 / per_minute)  # stay under the quota
+        logger.info("reindex: %d/%d embedded", result.embedded, len(pending))
     return result
 
 

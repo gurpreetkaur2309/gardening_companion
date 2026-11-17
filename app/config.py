@@ -82,6 +82,8 @@ class BaseConfig:
     GEMINI_TIMEOUT_SECONDS = _int("GEMINI_TIMEOUT_SECONDS", 30)
     GEMINI_EMBED_MODEL = os.getenv("GEMINI_EMBED_MODEL", "gemini-embedding-001")
     GEMINI_EMBED_DIMENSIONS = _int("GEMINI_EMBED_DIMENSIONS", 768)
+    # Texts embedded per minute during a reindex; 0 disables pacing (paid tier).
+    GEMINI_EMBED_PER_MINUTE = _int("GEMINI_EMBED_PER_MINUTE", 90)
 
     # --- Storage / S3 ---
     STORAGE_BACKEND = os.getenv("STORAGE_BACKEND", "auto")  # auto | s3 | local
