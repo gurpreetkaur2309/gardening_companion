@@ -80,6 +80,8 @@ class BaseConfig:
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or None
     GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-lite-latest")
     GEMINI_TIMEOUT_SECONDS = _int("GEMINI_TIMEOUT_SECONDS", 30)
+    GEMINI_EMBED_MODEL = os.getenv("GEMINI_EMBED_MODEL", "gemini-embedding-001")
+    GEMINI_EMBED_DIMENSIONS = _int("GEMINI_EMBED_DIMENSIONS", 768)
 
     # --- Storage / S3 ---
     STORAGE_BACKEND = os.getenv("STORAGE_BACKEND", "auto")  # auto | s3 | local

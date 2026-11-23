@@ -25,6 +25,7 @@ from pydantic import ValidationError as PydanticValidationError
 
 from ..models.enums import CareSource, Sunlight
 from ..models.plant import PlantCare
+from .llm import LLMClient
 
 logger = logging.getLogger(__name__)
 
@@ -91,10 +92,19 @@ class CareLookupResult:
 class GeminiClient:
     """Thin wrapper over ``google-genai`` that never raises at the call site."""
 
-    def __init__(self, api_key: str, model: str, timeout_seconds: int = 30) -> None:
+    def __init__(
+        self,
+        api_key: str,
+        model: str,
+        timeout_seconds: int = 30,
+        embed_model: str = "gemini-embedding-001",
+        embed_dimensions: int = 768,
+    ) -> None:
         from google import genai  # imported lazily: optional dependency
 
         self.model = model
+        self.embed_model = embed_model
+        self.embed_dimensions = embed_dimensions
         self._genai = genai
         self._client = genai.Client(
             api_key=api_key,
@@ -141,6 +151,37 @@ class GeminiClient:
             return None
         return text.strip()
 
+    def embed(
+        self, texts: list[str], *, task_type: str = "RETRIEVAL_DOCUMENT"
+    ) -> list[list[float]] | None:
+        """Embed ``texts``; one vector each, or ``None`` if the call failed.
+
+        ``task_type`` should be ``RETRIEVAL_QUERY`` for search queries and
+        ``RETRIEVAL_DOCUMENT`` for the catalog side — the model embeds the two
+        differently on purpose.
+        """
+        from google.genai import types
+
+        if not texts:
+            return []
+        try:
+            response = self._client.models.embed_content(
+                model=self.embed_model,
+                contents=list(texts),  # type: ignore[arg-type]
+                config=types.EmbedContentConfig(
+                    task_type=task_type, output_dimensionality=self.embed_dimensions
+                ),
+            )
+        except Exception:
+            logger.warning("Gemini embedding request failed", exc_info=True)
+            return None
+
+        vectors = [list(e.values or []) for e in (response.embeddings or [])]
+        if len(vectors) != len(texts) or not all(vectors):
+            logger.info("Gemini returned %d embeddings for %d texts", len(vectors), len(texts))
+            return None
+        return vectors
+
 
 def init_app(app: Flask) -> None:
     """Build the client once at boot, or record that AI is off."""
@@ -154,6 +195,8 @@ def init_app(app: Flask) -> None:
             api_key=api_key,
             model=app.config.get("GEMINI_MODEL", "gemini-flash-lite-latest"),
             timeout_seconds=app.config.get("GEMINI_TIMEOUT_SECONDS", 30),
+            embed_model=app.config.get("GEMINI_EMBED_MODEL", "gemini-embedding-001"),
+            embed_dimensions=app.config.get("GEMINI_EMBED_DIMENSIONS", 768),
         )
         app.logger.info("Gemini: enabled (model=%s)", app.config.get("GEMINI_MODEL"))
     except Exception:
@@ -161,7 +204,7 @@ def init_app(app: Flask) -> None:
         app.logger.warning("Gemini: could not initialise client, disabling", exc_info=True)
 
 
-def get_client() -> GeminiClient | None:
+def get_client() -> LLMClient | None:
     """The configured client, or ``None`` when AI features are off."""
     return current_app.extensions.get("gemini")
 

@@ -44,3 +44,6 @@ celerybeat.pid
 
 # Logs
 *.log
+
+# Data pipeline working files (raw API cache, stage outputs)
+data/pipeline/

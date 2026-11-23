@@ -94,6 +94,27 @@ class PlantRepository(BaseRepository):
     def delete(self, plant_id: ObjectId) -> bool:
         return self.delete_by_id(plant_id)
 
+    def upsert_fill_only(self, plant: Plant) -> tuple[bool, bool]:
+        """Insert a new species, or fill *blank* fields of an existing one.
+
+        Used by bulk imports: care data, edits and uploaded images that already
+        exist are never overwritten.  Returns ``(created, changed)``.
+        """
+        key = plant.scientific_name
+        existing = self.collection.find_one({"scientific_name": key}) if key else None
+        if existing is None:
+            self.create(plant)
+            return True, True
+
+        fillable = ("description", "sapling_description", "family", "genus", "image_key")
+        incoming = plant.to_doc()
+        patch = {f: incoming[f] for f in fillable if incoming.get(f) and not existing.get(f)}
+        if not patch:
+            return False, False
+        patch["updated_at"] = datetime.now(UTC)
+        self.collection.update_one({"_id": existing["_id"]}, {"$set": patch})
+        return False, True
+
     def upsert_by_scientific_name(self, plant: Plant) -> tuple[Plant, bool]:
         """Insert, or update in place if the species is already catalogued.
 
